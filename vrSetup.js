@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
 import { scene, camera, renderer, cubes } from './cubes.js';
 
-//  Add VR Button for WebXR
+// Add VR Button for WebXR
 document.body.appendChild(VRButton.createButton(renderer));
 
 // VR Controllers (Left = 0, Right = 1)
@@ -11,23 +11,18 @@ const controller2 = renderer.xr.getController(1); // Right controller (move)
 scene.add(controller1);
 scene.add(controller2);
 
-//  Add Controllers to Scene & Track Gamepads
-const controllers = new Map();
+// Track controllers when VR session starts
+const controllers = { left: null, right: null };
 
-function setupController(controller) {
-    controller.addEventListener('connected', (event) => {
-        controllers.set(event.data.handedness, event.data);
+renderer.xr.addEventListener("sessionstart", () => {
+    const session = renderer.xr.getSession();
+    session.inputSources.forEach((source) => {
+        if (source.handedness === "left") controllers.left = source;
+        if (source.handedness === "right") controllers.right = source;
     });
+});
 
-    controller.addEventListener('disconnected', (event) => {
-        controllers.delete(event.data.handedness);
-    });
-}
-
-setupController(controller1);
-setupController(controller2);
-
-//  Raycaster for VR Selection
+// Raycaster for VR Selection
 const raycaster = new THREE.Raycaster();
 
 function selectCube(intersects) {
@@ -37,7 +32,7 @@ function selectCube(intersects) {
     }
 }
 
-//  Handle VR Controller Selection (Trigger Button)
+// Handle VR Controller Selection (Trigger Button)
 controller1.addEventListener('selectstart', () => {
     raycaster.set(controller1.position, camera.getWorldDirection(new THREE.Vector3()));
     const intersects = raycaster.intersectObjects(cubes);
@@ -54,26 +49,23 @@ controller2.addEventListener('selectstart', () => {
 const movementSpeed = 0.05;
 const rotationSpeed = 0.03;
 
-//  Function to Read VR Controller Joystick Input
-function handleJoystickInput() {
-    const session = renderer.xr.getSession();
-    if (!session) return;
-
-    const inputSources = session.inputSources;
-
-    for (const source of inputSources) {
+// Function to Read VR Controller Joystick Input
+function handleJoystickInput(xrFrame) {
+    const session = xrFrame.session;
+    for (const source of session.inputSources) {
         if (!source.gamepad) continue;
 
+        const handedness = source.handedness;
         const { axes } = source.gamepad;
-        const handedness = source.handedness; // "left" or "right"
 
-        // LEFT Controller (Rotate Camera)
+        if (axes.length < 4) continue; // Ensure the controller has joystick axes
+
+        // Left Controller (Rotate Camera)
         if (handedness === "left") {
-            const rotationY = axes[2] * rotationSpeed; // Left/right rotation
-            camera.rotation.y -= rotationY;
+            camera.rotation.y -= axes[2] * rotationSpeed;
         }
 
-        // RIGHT Controller (Move Camera)
+        // Right Controller (Move Camera)
         if (handedness === "right") {
             const forward = new THREE.Vector3();
             camera.getWorldDirection(forward);
@@ -94,8 +86,8 @@ function limitCameraPitch() {
 }
 
 // Update Loop for Joystick Movement
-renderer.setAnimationLoop(() => {
-    handleJoystickInput();
+renderer.setAnimationLoop((time, xrFrame) => {
+    if (xrFrame) handleJoystickInput(xrFrame);
     limitCameraPitch();
     renderer.render(scene, camera);
 });
