@@ -28,11 +28,11 @@ for (let i = 0; i < 100; i++) {
     const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
 
     // Position cubes randomly in a 5-meter radius
-    cube.position.set(
-        (Math.random() - 0.5) * 5,
-        Math.random() * 2 + 1, // Avoid ground level
-        (Math.random() - 0.5) * 5
-    );
+    const x = (i - 50) * 0.3; // Spread cubes along X
+    const y = Math.sin(i * 0.2) * 2; // Sine wave movement in Y
+    const z = 0; // Keep cubes aligned in Z
+
+    cube.position.set(x, y, z);
 
     scene.add(cube);
     cubes.push(cube);
