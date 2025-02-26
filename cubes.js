@@ -23,7 +23,7 @@ export const cubes = [];
 const cubeGeometry = new THREE.BoxGeometry(0.3, 0.3, 0.3);
 const colors = [0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff]; // Different colors
 
-for (let i = 0; i < 100; i++) {
+for (let i = 0; i < 10; i++) {
     const cubeMaterial = new THREE.MeshStandardMaterial({ color: colors[i % colors.length] });
     const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
 
