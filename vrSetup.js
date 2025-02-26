@@ -1,18 +1,33 @@
 import * as THREE from 'three';
 import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
-import { XRControllerModelFactory } from 'three/examples/jsm/webxr/XRControllerModelFactory.js';
 import { scene, camera, renderer, cubes } from './cubes.js';
 
-// 1️ Add VR Button
+//  Add VR Button for WebXR
 document.body.appendChild(VRButton.createButton(renderer));
 
-// 2️ VR Controllers (Left = 0, Right = 1)
-const controller1 = renderer.xr.getController(0); // Left controller
-const controller2 = renderer.xr.getController(1); // Right controller
+// VR Controllers (Left = 0, Right = 1)
+const controller1 = renderer.xr.getController(0); // Left controller (rotate)
+const controller2 = renderer.xr.getController(1); // Right controller (move)
 scene.add(controller1);
 scene.add(controller2);
 
-// 3️ Raycaster for VR Selection
+//  Add Controllers to Scene & Track Gamepads
+const controllers = new Map();
+
+function setupController(controller) {
+    controller.addEventListener('connected', (event) => {
+        controllers.set(event.data.handedness, event.data);
+    });
+
+    controller.addEventListener('disconnected', (event) => {
+        controllers.delete(event.data.handedness);
+    });
+}
+
+setupController(controller1);
+setupController(controller2);
+
+//  Raycaster for VR Selection
 const raycaster = new THREE.Raycaster();
 
 function selectCube(intersects) {
@@ -22,7 +37,7 @@ function selectCube(intersects) {
     }
 }
 
-// 4️ Handle VR Controller Selection (Trigger Button)
+//  Handle VR Controller Selection (Trigger Button)
 controller1.addEventListener('selectstart', () => {
     raycaster.set(controller1.position, camera.getWorldDirection(new THREE.Vector3()));
     const intersects = raycaster.intersectObjects(cubes);
@@ -35,36 +50,52 @@ controller2.addEventListener('selectstart', () => {
     selectCube(intersects);
 });
 
-// 5️ Add Joystick (Thumbstick) Movement
+// Movement Variables
 const movementSpeed = 0.05;
 const rotationSpeed = 0.03;
 
-function handleJoystickInput(controller) {
-    if (!controller || !controller.gamepad) return;
+//  Function to Read VR Controller Joystick Input
+function handleJoystickInput() {
+    const session = renderer.xr.getSession();
+    if (!session) return;
 
-    const { axes } = controller.gamepad;
+    const inputSources = session.inputSources;
 
-    // Left joystick (Rotate Scene)
-    if (controller === controller1) {
-        scene.rotation.y -= axes[2] * rotationSpeed; // Left/right rotation
-    }
+    for (const source of inputSources) {
+        if (!source.gamepad) continue;
 
-    // Right joystick (Move Camera)
-    if (controller === controller2) {
-        const forward = new THREE.Vector3();
-        camera.getWorldDirection(forward);
+        const { axes } = source.gamepad;
+        const handedness = source.handedness; // "left" or "right"
 
-        const right = new THREE.Vector3();
-        right.crossVectors(camera.up, forward);
+        // LEFT Controller (Rotate Camera)
+        if (handedness === "left") {
+            const rotationY = axes[2] * rotationSpeed; // Left/right rotation
+            camera.rotation.y -= rotationY;
+        }
 
-        camera.position.addScaledVector(forward, -axes[3] * movementSpeed); // Forward/backward
-        camera.position.addScaledVector(right, axes[2] * movementSpeed); // Left/right
+        // RIGHT Controller (Move Camera)
+        if (handedness === "right") {
+            const forward = new THREE.Vector3();
+            camera.getWorldDirection(forward);
+            forward.y = 0; // Keep movement horizontal
+
+            const right = new THREE.Vector3();
+            right.crossVectors(camera.up, forward);
+
+            camera.position.addScaledVector(forward, -axes[3] * movementSpeed); // Forward/backward
+            camera.position.addScaledVector(right, axes[2] * movementSpeed); // Left/right
+        }
     }
 }
 
-// 6️ Update Loop for VR Joystick Movement
+// Prevent Camera from Flipping
+function limitCameraPitch() {
+    camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x));
+}
+
+// Update Loop for Joystick Movement
 renderer.setAnimationLoop(() => {
-    handleJoystickInput(controller1);
-    handleJoystickInput(controller2);
+    handleJoystickInput();
+    limitCameraPitch();
     renderer.render(scene, camera);
 });
