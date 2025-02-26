@@ -30,8 +30,8 @@ window.addEventListener('keydown', (event) => {
     switch (event.key) {
         case 'w': case 'ArrowUp': movement.forward = 1; break;
         case 's': case 'ArrowDown': movement.forward = -1; break;
-        case 'a': case 'ArrowLeft': movement.right = -1; break;
-        case 'd': case 'ArrowRight': movement.right = 1; break;
+        case 'a': case 'ArrowLeft': movement.right = 1; break;
+        case 'd': case 'ArrowRight': movement.right = -1; break;
     }
 });
 
@@ -54,5 +54,28 @@ function updateCameraMovement() {
 
     requestAnimationFrame(updateCameraMovement);
 }
+let isDragging = false;
+let previousMouseX = 0, previousMouseY = 0;
+
+window.addEventListener('mousedown', (event) => {
+    isDragging = true;
+    previousMouseX = event.clientX;
+    previousMouseY = event.clientY;
+});
+
+window.addEventListener('mouseup', () => {
+    isDragging = false;
+});
+
+window.addEventListener('mousemove', (event) => {
+    if (isDragging) {
+        let deltaX = event.clientX - previousMouseX;
+        let deltaY = event.clientY - previousMouseY;
+        scene.rotation.y += deltaX * 0.005;
+        scene.rotation.x += deltaY * 0.005;
+        previousMouseX = event.clientX;
+        previousMouseY = event.clientY;
+    }
+});
 
 updateCameraMovement();
