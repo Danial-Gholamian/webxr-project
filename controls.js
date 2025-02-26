@@ -71,8 +71,15 @@ window.addEventListener('mousemove', (event) => {
     if (isDragging) {
         let deltaX = event.clientX - previousMouseX;
         let deltaY = event.clientY - previousMouseY;
-        scene.rotation.y += deltaX * 0.005;
-        scene.rotation.x += deltaY * 0.005;
+
+        // Rotate camera
+        const rotationSpeed = 0.002;
+        camera.rotation.y -= deltaX * rotationSpeed; // Rotate left/right
+        camera.rotation.x -= deltaY * rotationSpeed; // Rotate up/down
+
+        // Prevent the camera from flipping upside down
+        camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x));
+
         previousMouseX = event.clientX;
         previousMouseY = event.clientY;
     }
