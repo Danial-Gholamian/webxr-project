@@ -11,7 +11,7 @@ renderer.xr.enabled = true;
 document.body.appendChild(renderer.domElement);
 
 // 2️ Add a 360° Skybox
-const skyboxTexture = new THREE.TextureLoader().load('your-360-image.jpg'); // Replace with real 360° image
+const skyboxTexture = new THREE.TextureLoader().load('background.webp'); // Replace with real 360° image
 const skybox = new THREE.Mesh(
     new THREE.SphereGeometry(100, 32, 32),
     new THREE.MeshBasicMaterial({ map: skyboxTexture, side: THREE.BackSide })
