@@ -56,8 +56,8 @@ controller2.addEventListener('selectstart', () => {
 });
 
 // 5️ Movement Variables
-const movementSpeed = 0.05;
-const rotationSpeed = 0.03;
+const movementSpeed = 0.5;
+const rotationSpeed = 0.1;
 
 // 6️ Handle VR Joystick Input for Movement & Rotation
 function handleJoystickInput(xrFrame) {
