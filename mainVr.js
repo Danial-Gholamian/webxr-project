@@ -86,67 +86,10 @@ controller2.addEventListener('selectstart', () => {
     selectCube(intersects);
 });
 
-// 6️⃣ Movement Controls (WASD & VR Thumbsticks)
-const movement = { forward: 0, right: 0 };
-const movementSpeed = 0.1;
-
-// Keyboard movement logic (WASD)
-window.addEventListener('keydown', (event) => {
-    switch (event.key) {
-        case 'w': case 'ArrowUp': movement.forward = 1; break;
-        case 's': case 'ArrowDown': movement.forward = -1; break;
-        case 'a': case 'ArrowLeft': movement.right = 1; break;
-        case 'd': case 'ArrowRight': movement.right = -1; break;
-    }
-});
-
-window.addEventListener('keyup', (event) => {
-    switch (event.key) {
-        case 'w': case 'ArrowUp': case 's': case 'ArrowDown': movement.forward = 0; break;
-        case 'a': case 'ArrowLeft': case 'd': case 'ArrowRight': movement.right = 0; break;
-    }
-});
-
-// 7️⃣ VR Thumbstick Movement
-function handleJoystickInput(xrFrame) {
-    const session = xrFrame.session;
-
-    for (const source of session.inputSources) {
-        if (!source.gamepad) continue;
-
-        const handedness = source.handedness;
-        const { axes } = source.gamepad;
-
-        if (axes.length < 2) continue; // Ensure valid input
-
-        if (handedness === "right") { // Right controller for movement
-            movement.forward = -axes[1]; // Forward/backward
-            movement.right = axes[0]; // Left/right
-
-            if (Math.abs(axes[1]) < 0.1) movement.forward = 0; // Stop forward/backward when centered
-            if (Math.abs(axes[0]) < 0.1) movement.right = 0; // Stop left/right when centered
-        }
-    }
-}
-
-// 8️⃣ Animation Loop with Movement Logic
+// 6️⃣ Animation Loop
 function animate() {
-    renderer.setAnimationLoop((time, xrFrame) => {
-        if (xrFrame) handleJoystickInput(xrFrame);
-
-        // Apply movement each frame
-        const forward = new THREE.Vector3();
-        camera.getWorldDirection(forward);
-        forward.y = 0; // Keep movement horizontal
-
-        const right = new THREE.Vector3();
-        right.crossVectors(camera.up, forward);
-
-        camera.position.addScaledVector(forward, movement.forward * movementSpeed);
-        camera.position.addScaledVector(right, movement.right * movementSpeed);
-
+    renderer.setAnimationLoop(() => {
         renderer.render(scene, camera);
     });
 }
-
 animate();

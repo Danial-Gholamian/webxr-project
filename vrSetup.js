@@ -48,11 +48,12 @@ controller2.addEventListener('selectstart', () => {
 // Movement Variables
 const movementSpeed = 0.05;
 const rotationSpeed = 0.03;
+const movement = { forward: 0, right: 0, rotate: 0 }; // Store movement state
 
 // Function to Read VR Controller Joystick Input
 function handleJoystickInput(xrFrame) {
     const session = xrFrame.session;
-    let debugText = "Joystick Axes:\n";
+    if (!session) return;
 
     for (const source of session.inputSources) {
         if (!source.gamepad) continue;
@@ -60,32 +61,24 @@ function handleJoystickInput(xrFrame) {
         const handedness = source.handedness;
         const { axes } = source.gamepad;
 
-        debugText += `${handedness} Controller: [${axes.map(a => a.toFixed(2)).join(", ")}]\n`;
+        if (axes.length < 2) continue; // Ensure valid input
 
-        if (axes.length < 4) continue;
-
-        // Left Controller (Rotate Camera)
         if (handedness === "left") {
-            camera.rotation.y -= axes[2] * rotationSpeed;
+            movement.rotate = Math.abs(axes[0]) > 0.1 ? axes[0] * rotationSpeed : 0; // Left thumbstick rotates
         }
 
-        // Right Controller (Move Camera)
         if (handedness === "right") {
-            const forward = new THREE.Vector3();
-            camera.getWorldDirection(forward);
-            forward.y = 0;
-
-            const right = new THREE.Vector3();
-            right.crossVectors(camera.up, forward);
-
-            camera.position.addScaledVector(forward, -axes[3] * movementSpeed);
-            camera.position.addScaledVector(right, axes[2] * movementSpeed);
+            movement.forward = Math.abs(axes[1]) > 0.1 ? -axes[1] : 0; // Right thumbstick forward/backward
+            movement.right = Math.abs(axes[0]) > 0.1 ? axes[0] : 0; // Right thumbstick left/right
         }
     }
 
-    document.getElementById("debug-info").innerText = debugText;
+    // Update debug info if element exists
+    const debugElement = document.getElementById("debug-info");
+    if (debugElement) {
+        debugElement.innerText = `Joystick Axes:\nForward: ${movement.forward.toFixed(2)}\nRight: ${movement.right.toFixed(2)}\nRotate: ${movement.rotate.toFixed(2)}`;
+    }
 }
-
 
 // Prevent Camera from Flipping
 function limitCameraPitch() {
@@ -95,6 +88,19 @@ function limitCameraPitch() {
 // Update Loop for Joystick Movement
 renderer.setAnimationLoop((time, xrFrame) => {
     if (xrFrame) handleJoystickInput(xrFrame);
+
+    // Apply movement
+    const forward = new THREE.Vector3();
+    camera.getWorldDirection(forward);
+    forward.y = 0; // Keep movement horizontal
+
+    const right = new THREE.Vector3();
+    right.crossVectors(camera.up, forward);
+
+    camera.position.addScaledVector(forward, movement.forward * movementSpeed);
+    camera.position.addScaledVector(right, movement.right * movementSpeed);
+    camera.rotation.y -= movement.rotate; // Apply rotation
+
     limitCameraPitch();
     renderer.render(scene, camera);
 });
