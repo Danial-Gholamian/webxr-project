@@ -1,61 +1,104 @@
 import * as THREE from 'three';
-import { ImmersiveControls } from '@depasquale/three-immersive-controls';
 import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
-import { XRControllerModelFactory } from 'three/examples/jsm/webxr/XRControllerModelFactory.js';
-import { XRHandModelFactory } from 'three/examples/jsm/webxr/XRHandModelFactory.js';
+import { scene, camera, renderer, cubes } from './cubes.js';
 
-// 1️ Setup Scene, Camera, and Renderer
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.xr.enabled = true;
-document.body.appendChild(renderer.domElement);
-
-// 2️ Enable VR
+// 1️ Add VR Button for WebXR
 document.body.appendChild(VRButton.createButton(renderer));
+renderer.xr.enabled = true;
 
-// 3️ Add Lighting
-const light = new THREE.DirectionalLight(0xffffff, 1);
-light.position.set(1, 1, 1).normalize();
-scene.add(light);
-
-// 4️ Setup Controllers
-const controller1 = renderer.xr.getController(0); // Left Hand
-const controller2 = renderer.xr.getController(1); // Right Hand
+// 2️ VR Controllers (Left = 0, Right = 1)
+const controller1 = renderer.xr.getController(0); // Left (rotate)
+const controller2 = renderer.xr.getController(1); // Right (move)
 scene.add(controller1);
 scene.add(controller2);
 
-// 5️ Add Controller Models
-const controllerModelFactory = new XRControllerModelFactory();
-const handModelFactory = new XRHandModelFactory();
+// Track controllers when VR session starts
+const controllers = { left: null, right: null };
 
-const controllerGrip1 = renderer.xr.getControllerGrip(0);
-controllerGrip1.add(controllerModelFactory.createControllerModel(controllerGrip1));
-scene.add(controllerGrip1);
-
-const controllerGrip2 = renderer.xr.getControllerGrip(1);
-controllerGrip2.add(controllerModelFactory.createControllerModel(controllerGrip2));
-scene.add(controllerGrip2);
-
-// 6️ Setup Immersive Controls for Movement
-const controls = new ImmersiveControls(camera, renderer, scene, {
-    moveSpeed: { vr: 2.5, keyboard: 5 }, // Adjust movement speed
-    rotateSpeed: 1.5, // Adjust rotation speed
-    showControllerModel: true, // Display controllers in VR
-    showEnterVRButton: false, // We already added VRButton manually
-    vrControls: true, // Enable thumbstick movement
+renderer.xr.addEventListener("sessionstart", () => {
+    const session = renderer.xr.getSession();
+    session.inputSources.forEach((source) => {
+        if (source.handedness === "left") controllers.left = source;
+        if (source.handedness === "right") controllers.right = source;
+    });
 });
 
-// 7️ Create a Floor
-const floorGeometry = new THREE.PlaneGeometry(20, 20);
-const floorMaterial = new THREE.MeshStandardMaterial({ color: 0x666666 });
-const floor = new THREE.Mesh(floorGeometry, floorMaterial);
-floor.rotation.x = -Math.PI / 2;
-scene.add(floor);
+// 3️ Raycaster for VR Selection
+const raycaster = new THREE.Raycaster();
+let previouslySelectedCube = null;
 
-// 8️ Animation Loop
-renderer.setAnimationLoop(() => {
-    controls.update(); // Handles movement & rotation
+function selectCube(intersects) {
+    if (intersects.length > 0) {
+        const selectedCube = intersects[0].object;
+
+        // Reset previous selection
+        if (previouslySelectedCube && previouslySelectedCube !== selectedCube) {
+            previouslySelectedCube.material.color.set(0xff0000); // Default (red)
+        }
+
+        // Highlight new selection
+        selectedCube.material.color.set(0xffffff); // White when selected
+        previouslySelectedCube = selectedCube;
+    }
+}
+
+// 4️ Handle VR Controller Selection (Trigger Button)
+controller1.addEventListener('selectstart', () => {
+    raycaster.set(controller1.position, camera.getWorldDirection(new THREE.Vector3()));
+    const intersects = raycaster.intersectObjects(cubes);
+    selectCube(intersects);
+});
+
+controller2.addEventListener('selectstart', () => {
+    raycaster.set(controller2.position, camera.getWorldDirection(new THREE.Vector3()));
+    const intersects = raycaster.intersectObjects(cubes);
+    selectCube(intersects);
+});
+
+// 5️ Movement Variables
+const movementSpeed = 0.05;
+const rotationSpeed = 0.03;
+
+// 6️ Handle VR Joystick Input for Movement & Rotation
+function handleJoystickInput(xrFrame) {
+    const session = xrFrame.session;
+    for (const source of session.inputSources) {
+        if (!source.gamepad) continue;
+
+        const handedness = source.handedness;
+        const { axes } = source.gamepad;
+
+        console.log(`${handedness} Controller - Axes:`, axes);
+
+        if (axes.length < 4) continue;
+
+        if (handedness === "left") {
+            camera.rotation.y -= axes[2] * rotationSpeed;
+        }
+
+        if (handedness === "right") {
+            const forward = new THREE.Vector3();
+            camera.getWorldDirection(forward);
+            forward.y = 0;
+
+            const right = new THREE.Vector3();
+            right.crossVectors(camera.up, forward);
+
+            camera.position.addScaledVector(forward, -axes[3] * movementSpeed);
+            camera.position.addScaledVector(right, axes[2] * movementSpeed);
+        }
+    }
+}
+
+
+// 7️ Prevent Camera from Flipping
+function limitCameraPitch() {
+    camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x));
+}
+
+// 8️ Update Loop for VR Controls & Movement
+renderer.setAnimationLoop((time, xrFrame) => {
+    if (xrFrame) handleJoystickInput(xrFrame);
+    limitCameraPitch();
     renderer.render(scene, camera);
 });
