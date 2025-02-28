@@ -65,6 +65,16 @@ function handleJoystickInput(xrFrame) {
     const session = xrFrame.session;
     const deadZone = 0.1; // Ignore small movements to prevent drift
 
+    // Store movement directions *once* per frame
+    const forward = new THREE.Vector3();
+    camera.getWorldDirection(forward);
+    forward.y = 0; // Prevent vertical movement
+    forward.normalize();
+
+    const right = new THREE.Vector3();
+    right.crossVectors(camera.up, forward);
+    right.normalize();
+
     for (const source of session.inputSources) {
         if (!source.gamepad) continue;
 
@@ -73,34 +83,31 @@ function handleJoystickInput(xrFrame) {
 
         if (axes.length < 4) continue; // Ensure enough axes exist
 
-        // Check if at least one value is not zero (considering dead zone)
+        // Check if at least one axis has movement
         const hasMovement = axes.some(axis => Math.abs(axis) > deadZone);
         if (hasMovement) {
             console.log(`${handedness} Controller Moved - Axes:`, axes);
         }
 
-        // Left Controller (Rotate Camera)
+        // Left Controller: Rotate Camera
         if (handedness === "left") {
             camera.rotation.y -= axes[2] * 0.03; // Rotate left/right
         }
 
-        // Right Controller (Move Camera)
+        // Right Controller: Move Camera
         if (handedness === "right") {
-            const forward = new THREE.Vector3();
-            camera.getWorldDirection(forward);
-            forward.y = 0; // Prevent vertical drift
-
-            const right = new THREE.Vector3();
-            right.crossVectors(camera.up, forward);
-
             camera.position.addScaledVector(forward, -axes[3] * 0.05); // Forward/backward
             camera.position.addScaledVector(right, axes[2] * 0.05); // Left/right
         }
     }
 
+    // Force camera to update
+    camera.updateMatrixWorld(true);
+
     // Log camera position to confirm movement
-    // console.log(`Camera Position: x=${camera.position.x}, y=${camera.position.y}, z=${camera.position.z}`);
+    console.log(`Camera Position: x=${camera.position.x}, y=${camera.position.y}, z=${camera.position.z}`);
 }
+
 
 
 
