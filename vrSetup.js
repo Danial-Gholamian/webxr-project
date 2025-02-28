@@ -62,20 +62,33 @@ const rotationSpeed = 0.03;
 // 6️ Handle VR Joystick Input for Movement & Rotation
 function handleJoystickInput(xrFrame) {
     const session = xrFrame.session;
+    const deadZone = 0.1; // Ignore tiny movements
+
     for (const source of session.inputSources) {
         if (!source.gamepad) continue;
 
         const handedness = source.handedness;
         const { axes } = source.gamepad;
 
-        console.log(`${handedness} Controller - Axes:`, axes);
+        if (axes.length < 4) continue; // Ensure enough axes exist
 
-        if (axes.length < 4) continue;
-
-        if (handedness === "left") {
-            camera.rotation.y -= axes[2] * rotationSpeed;
+        // Log only when movement happens
+        if (Math.abs(axes[2]) > deadZone || Math.abs(axes[3]) > deadZone) {
+            console.log(`${handedness} Controller Moved - Axes:`, axes);
         }
 
+        // Left thumbstick rotates and moves forward/backward
+        if (handedness === "left") {
+            camera.rotation.y -= axes[2] * rotationSpeed;
+
+            const forward = new THREE.Vector3();
+            camera.getWorldDirection(forward);
+            forward.y = 0;
+
+            camera.position.addScaledVector(forward, -axes[3] * movementSpeed);
+        }
+
+        // Right thumbstick moves left/right
         if (handedness === "right") {
             const forward = new THREE.Vector3();
             camera.getWorldDirection(forward);
@@ -88,7 +101,12 @@ function handleJoystickInput(xrFrame) {
             camera.position.addScaledVector(right, axes[2] * movementSpeed);
         }
     }
+
+    // Log camera position to ensure movement
+    console.log(`Camera Position: x=${camera.position.x}, y=${camera.position.y}, z=${camera.position.z}`);
 }
+
+
 
 
 // 7️ Prevent Camera from Flipping
