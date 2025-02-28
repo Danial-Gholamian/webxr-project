@@ -52,13 +52,17 @@ const rotationSpeed = 0.03;
 // Function to Read VR Controller Joystick Input
 function handleJoystickInput(xrFrame) {
     const session = xrFrame.session;
+    let debugText = "Joystick Axes:\n";
+
     for (const source of session.inputSources) {
         if (!source.gamepad) continue;
 
         const handedness = source.handedness;
         const { axes } = source.gamepad;
 
-        if (axes.length < 4) continue; // Ensure the controller has joystick axes
+        debugText += `${handedness} Controller: [${axes.map(a => a.toFixed(2)).join(", ")}]\n`;
+
+        if (axes.length < 4) continue;
 
         // Left Controller (Rotate Camera)
         if (handedness === "left") {
@@ -69,16 +73,19 @@ function handleJoystickInput(xrFrame) {
         if (handedness === "right") {
             const forward = new THREE.Vector3();
             camera.getWorldDirection(forward);
-            forward.y = 0; // Keep movement horizontal
+            forward.y = 0;
 
             const right = new THREE.Vector3();
             right.crossVectors(camera.up, forward);
 
-            camera.position.addScaledVector(forward, -axes[3] * movementSpeed); // Forward/backward
-            camera.position.addScaledVector(right, axes[2] * movementSpeed); // Left/right
+            camera.position.addScaledVector(forward, -axes[3] * movementSpeed);
+            camera.position.addScaledVector(right, axes[2] * movementSpeed);
         }
     }
+
+    document.getElementById("debug-info").innerText = debugText;
 }
+
 
 // Prevent Camera from Flipping
 function limitCameraPitch() {

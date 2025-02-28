@@ -6,6 +6,16 @@
     <title>Three.js VR Cube</title>
     <style>
         body { margin: 0; overflow: hidden; }
+        #debug-info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-size: 18px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            z-index: 1000;
+        }
     </style>
     <script type="importmap">
         {
@@ -17,6 +27,9 @@
     </script>
 </head>
 <body>
+    <!-- Debug Info Display -->
+    <div id="debug-info">Joystick Debug Info</div>
+
     <script type="module" src="./cubes.js"></script>
     <script type="module" src="./vrSetup.js"></script>
     <script type="module" src="./controls.js"></script>
