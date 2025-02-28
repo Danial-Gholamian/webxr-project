@@ -99,7 +99,7 @@ function handleJoystickInput(xrFrame) {
     }
 
     // Log camera position to confirm movement
-    console.log(`Camera Position: x=${camera.position.x}, y=${camera.position.y}, z=${camera.position.z}`);
+    // console.log(`Camera Position: x=${camera.position.x}, y=${camera.position.y}, z=${camera.position.z}`);
 }
 
 
