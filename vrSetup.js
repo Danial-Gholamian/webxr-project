@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
 import { scene, camera, renderer, cubes } from './cubes.js';
+import { XRControllerModelFactory } from 'three/examples/jsm/webxr/XRControllerModelFactory.js';
 
 // 1️ Add VR Button for WebXR
 document.body.appendChild(VRButton.createButton(renderer));
@@ -17,6 +18,31 @@ const controller2 = renderer.xr.getController(1); // Right (move)
 scene.add(controller1);
 scene.add(controller2);
 
+// Function to Setup Controller Models and Laser Pointer
+function setupController(controller) {
+    const controllerGrip = renderer.xr.getControllerGrip(controller === controller1 ? 0 : 1);
+    const modelFactory = new XRControllerModelFactory();
+    controllerGrip.add(modelFactory.createControllerModel(controllerGrip));
+
+    scene.add(controllerGrip);
+
+    // Add a laser pointer (line)
+    const laserGeometry = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(0, 0, -1) // Direction of the ray
+    ]);
+    const laserMaterial = new THREE.LineBasicMaterial({ color: 0xffffff });
+    const laser = new THREE.Line(laserGeometry, laserMaterial);
+    laser.scale.z = 5;
+    laser.visible = true;
+    controller.add(laser);
+    controller.userData.laser = laser;
+}
+
+// Call setup for each controller
+setupController(controller1);
+setupController(controller2);
+
 // Track controllers when VR session starts
 const controllers = { left: null, right: null };
 
@@ -32,7 +58,11 @@ renderer.xr.addEventListener("sessionstart", () => {
 const raycaster = new THREE.Raycaster();
 let previouslySelectedCube = null;
 
-function selectCube(intersects) {
+function selectCube(controller) {
+    raycaster.setFromMatrixPosition(controller.matrixWorld); // Set ray origin
+    raycaster.ray.direction.set(0, 0, -1).applyQuaternion(controller.quaternion); // Set ray direction
+
+    const intersects = raycaster.intersectObjects(cubes);
     if (intersects.length > 0) {
         const selectedCube = intersects[0].object;
 
@@ -42,23 +72,14 @@ function selectCube(intersects) {
         }
 
         // Highlight new selection
-        selectedCube.material.color.set(0xffffff); // White when selected
+        selectedCube.material.color.set(0xffffff);
         previouslySelectedCube = selectedCube;
     }
 }
 
 // 5️ Handle VR Controller Selection (Trigger Button)
-controller1.addEventListener('selectstart', () => {
-    raycaster.set(controller1.position, camera.getWorldDirection(new THREE.Vector3()));
-    const intersects = raycaster.intersectObjects(cubes);
-    selectCube(intersects);
-});
-
-controller2.addEventListener('selectstart', () => {
-    raycaster.set(controller2.position, camera.getWorldDirection(new THREE.Vector3()));
-    const intersects = raycaster.intersectObjects(cubes);
-    selectCube(intersects);
-});
+controller1.addEventListener('selectstart', () => selectCube(controller1));
+controller2.addEventListener('selectstart', () => selectCube(controller2));
 
 // 6️ Movement Variables
 const movementSpeed = 0.05;
