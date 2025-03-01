@@ -140,6 +140,13 @@ function handleJoystickInput(xrFrame) {
     console.log(`Camera Group Position: x=${cameraGroup.position.x}, y=${cameraGroup.position.y}, z=${cameraGroup.position.z}`);
 }
 
+function updateLaserPointer(controller) {
+    if (controller.userData.laser) {
+        controller.userData.laser.position.setFromMatrixPosition(controller.matrixWorld);
+        controller.userData.laser.quaternion.setFromRotationMatrix(controller.matrixWorld);
+    }
+}
+
 // 9️ Prevent Camera from Flipping
 function limitCameraPitch() {
     camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x));
@@ -149,5 +156,7 @@ function limitCameraPitch() {
 renderer.setAnimationLoop((time, xrFrame) => {
     if (xrFrame) handleJoystickInput(xrFrame);
     limitCameraPitch();
+    updateLaserPointer(controller1);
+    updateLaserPointer(controller2);
     renderer.render(scene, camera);
 });
