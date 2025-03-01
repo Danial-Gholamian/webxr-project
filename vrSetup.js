@@ -6,7 +6,12 @@ import { scene, camera, renderer, cubes } from './cubes.js';
 document.body.appendChild(VRButton.createButton(renderer));
 renderer.xr.enabled = true;
 
-// 2️ VR Controllers (Left = 0, Right = 1)
+// 2️ Create a Parent Group for the Camera (Fix Movement Issue)
+let cameraGroup = new THREE.Group();
+cameraGroup.add(camera);
+scene.add(cameraGroup); // Add the group to the scene
+
+// 3️ VR Controllers (Left = 0, Right = 1)
 const controller1 = renderer.xr.getController(0); // Left (rotate)
 const controller2 = renderer.xr.getController(1); // Right (move)
 scene.add(controller1);
@@ -23,7 +28,7 @@ renderer.xr.addEventListener("sessionstart", () => {
     });
 });
 
-// 3️ Raycaster for VR Selection
+// 4️ Raycaster for VR Selection
 const raycaster = new THREE.Raycaster();
 let previouslySelectedCube = null;
 
@@ -42,7 +47,7 @@ function selectCube(intersects) {
     }
 }
 
-// 4️ Handle VR Controller Selection (Trigger Button)
+// 5️ Handle VR Controller Selection (Trigger Button)
 controller1.addEventListener('selectstart', () => {
     raycaster.set(controller1.position, camera.getWorldDirection(new THREE.Vector3()));
     const intersects = raycaster.intersectObjects(cubes);
@@ -55,25 +60,32 @@ controller2.addEventListener('selectstart', () => {
     selectCube(intersects);
 });
 
-// 5️ Movement Variables
+// 6️ Movement Variables
 const movementSpeed = 0.05;
 const rotationSpeed = 0.03;
+const deadZone = 0.1; // Ignore small joystick movements
 
-// 6️ Handle VR Joystick Input for Movement & Rotation
-// 6️ Handle VR Joystick Input for Movement & Rotation
+// 7️ Function to Move the Camera Group Based on Thumbstick Input
+function moveThumbstick(inputX, inputY, speed = movementSpeed) {
+    let direction = new THREE.Vector3();
+    camera.getWorldDirection(direction); // Get forward direction
+    direction.y = 0; // Keep movement horizontal
+    direction.normalize();
+
+    let right = new THREE.Vector3();
+    right.crossVectors(camera.up, direction).normalize(); // Get right direction
+
+    // Apply movement only if input is beyond the dead zone
+    if (Math.abs(inputX) > deadZone || Math.abs(inputY) > deadZone) {
+        let moveX = right.multiplyScalar(inputX * speed);
+        let moveZ = direction.multiplyScalar(-inputY * speed);
+        cameraGroup.position.add(moveX).add(moveZ);
+    }
+}
+
+// 8️ Handle VR Joystick Input for Movement & Rotation
 function handleJoystickInput(xrFrame) {
     const session = xrFrame.session;
-    const deadZone = 0.1; // Ignore small movements to prevent drift
-
-    // Store movement directions *once* per frame
-    const forward = new THREE.Vector3();
-    camera.getWorldDirection(forward);
-    forward.y = 0; // Prevent vertical movement
-    forward.normalize();
-
-    const right = new THREE.Vector3();
-    right.crossVectors(camera.up, forward);
-    right.normalize();
 
     for (const source of session.inputSources) {
         if (!source.gamepad) continue;
@@ -89,34 +101,30 @@ function handleJoystickInput(xrFrame) {
             console.log(`${handedness} Controller Moved - Axes:`, axes);
         }
 
-        // Left Controller: Rotate Camera
+        // Left Thumbstick: Rotate Camera Group
         if (handedness === "left") {
-            camera.rotation.y -= axes[2] * 0.03; // Rotate left/right
+            cameraGroup.rotation.y -= axes[2] * rotationSpeed;
         }
 
-        // Right Controller: Move Camera
+        // Right Thumbstick: Move Camera Group
         if (handedness === "right") {
-            camera.position.addScaledVector(forward, -axes[3] * 0.05); // Forward/backward
-            camera.position.addScaledVector(right, axes[2] * 0.05); // Left/right
+            moveThumbstick(axes[2], axes[3]);
         }
     }
 
-    // Force camera to update
-    camera.updateMatrixWorld(true);
+    // Force camera updates
+    cameraGroup.updateMatrixWorld(true);
 
     // Log camera position to confirm movement
-    console.log(`Camera Position: x=${camera.position.x}, y=${camera.position.y}, z=${camera.position.z}`);
+    console.log(`Camera Group Position: x=${cameraGroup.position.x}, y=${cameraGroup.position.y}, z=${cameraGroup.position.z}`);
 }
 
-
-
-
-// 7️ Prevent Camera from Flipping
+// 9️ Prevent Camera from Flipping
 function limitCameraPitch() {
     camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x));
 }
 
-// 8️ Update Loop for VR Controls & Movement
+//  Update Loop for VR Controls & Movement
 renderer.setAnimationLoop((time, xrFrame) => {
     if (xrFrame) handleJoystickInput(xrFrame);
     limitCameraPitch();
