@@ -63,8 +63,15 @@ const raycaster = new THREE.Raycaster();
 let previouslySelectedCube = null;
 
 function selectCube(controller) {
-    raycaster.setFromMatrixPosition(controller.matrixWorld); // Set ray origin
-    raycaster.ray.direction.set(0, 0, -1).applyQuaternion(controller.quaternion); // Set ray direction
+    let origin = new THREE.Vector3();
+    controller.getWorldPosition(origin); // Get controller world position
+    raycaster.ray.origin.copy(origin);
+
+    let direction = new THREE.Vector3();
+    controller.getWorldDirection(direction); // Get world-aligned forward direction
+    raycaster.ray.direction.copy(direction);
+
+    raycaster.far = 10; // Ensure the ray is long enough to reach cubes
 
     const intersects = raycaster.intersectObjects(cubes);
     if (intersects.length > 0) {
@@ -80,6 +87,7 @@ function selectCube(controller) {
         previouslySelectedCube = selectedCube;
     }
 }
+
 
 // 5️ Handle VR Controller Selection (Trigger Button)
 controller1.addEventListener('selectstart', () => selectCube(controller1));
