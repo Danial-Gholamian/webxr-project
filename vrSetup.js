@@ -15,16 +15,20 @@ scene.add(cameraGroup); // Add the group to the scene
 // 3️ VR Controllers (Left = 0, Right = 1)
 const controller1 = renderer.xr.getController(0); // Left (rotate)
 const controller2 = renderer.xr.getController(1); // Right (move)
-scene.add(controller1);
-scene.add(controller2);
+// scene.add(controller1);
+// scene.add(controller2);
+cameraGroup.add(controller1);
+cameraGroup.add(controller2);
 
-// Function to Setup Controller Models and Laser Pointer
+
+// Function to Setup Controller Models and Laser Pointer 
 function setupController(controller) {
     const controllerGrip = renderer.xr.getControllerGrip(controller === controller1 ? 0 : 1);
     const modelFactory = new XRControllerModelFactory();
     controllerGrip.add(modelFactory.createControllerModel(controllerGrip));
 
-    scene.add(controllerGrip);
+    cameraGroup.add(controllerGrip);
+
 
     // Add a laser pointer (line)
     const laserGeometry = new THREE.BufferGeometry().setFromPoints([
@@ -142,8 +146,8 @@ function handleJoystickInput(xrFrame) {
 
 function updateLaserPointer(controller) {
     if (controller.userData.laser) {
-        controller.userData.laser.position.setFromMatrixPosition(controller.matrixWorld);
-        controller.userData.laser.quaternion.setFromRotationMatrix(controller.matrixWorld);
+        controller.userData.laser.position.copy(controller.position);
+        controller.userData.laser.quaternion.copy(controller.quaternion);
     }
 }
 
