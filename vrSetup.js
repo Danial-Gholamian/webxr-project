@@ -62,36 +62,26 @@ renderer.xr.addEventListener("sessionstart", () => {
 const raycaster = new THREE.Raycaster();
 let previouslySelectedCube = null;
 
-function selectCube(controller) {
-    let origin = new THREE.Vector3();
-    controller.getWorldPosition(origin); // Get controller world position
-    raycaster.ray.origin.copy(origin);
-
-    let direction = new THREE.Vector3();
-    controller.getWorldDirection(direction); // Get world-aligned forward direction
-    raycaster.ray.direction.copy(direction);
-
-    raycaster.far = 10; // Ensure the ray is long enough to reach cubes
-
-    const intersects = raycaster.intersectObjects(cubes);
+function selectCube(intersects) {
     if (intersects.length > 0) {
         const selectedCube = intersects[0].object;
-
-        // Reset previous selection
-        if (previouslySelectedCube && previouslySelectedCube !== selectedCube) {
-            previouslySelectedCube.material.color.set(0xff0000); // Default (red)
-        }
-
-        // Highlight new selection
-        selectedCube.material.color.set(0xffffff);
-        previouslySelectedCube = selectedCube;
+        selectedCube.material.color.set(0xffffff); // Change to white when selected
     }
 }
 
-
 // 5️ Handle VR Controller Selection (Trigger Button)
-controller1.addEventListener('selectstart', () => selectCube(controller1));
-controller2.addEventListener('selectstart', () => selectCube(controller2));
+// Handle VR Controller Selection (Trigger Button)
+controller1.addEventListener('selectstart', () => {
+    raycaster.set(controller1.position, camera.getWorldDirection(new THREE.Vector3()));
+    const intersects = raycaster.intersectObjects(cubes);
+    selectCube(intersects);
+});
+
+controller2.addEventListener('selectstart', () => {
+    raycaster.set(controller2.position, camera.getWorldDirection(new THREE.Vector3()));
+    const intersects = raycaster.intersectObjects(cubes);
+    selectCube(intersects);
+});
 
 // 6️ Movement Variables
 const movementSpeed = 0.05;
