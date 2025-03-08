@@ -22,7 +22,7 @@ scene.add(skybox);
 export const cubes = [];
 export const labels = [];
 const cubeGeometry = new THREE.BoxGeometry(0.3, 0.3, 0.3);
-const colors = [0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff];
+// const colors = [0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff];
 
 for (let i = 0; i < 100; i++) {
     const cubeMaterial = new THREE.MeshStandardMaterial({ color: colors[i % colors.length] });
