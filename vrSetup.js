@@ -21,19 +21,18 @@ cameraGroup.add(controller1);
 cameraGroup.add(controller2);
 
 
-// Function to Setup Controller Models and Laser Pointer 
+// Function to Setup Controller Models and Laser Pointer **NEW**
 function setupController(controller) {
     const controllerGrip = renderer.xr.getControllerGrip(controller === controller1 ? 0 : 1);
     const modelFactory = new XRControllerModelFactory();
     controllerGrip.add(modelFactory.createControllerModel(controllerGrip));
 
-    cameraGroup.add(controllerGrip);
+    scene.add(controllerGrip); // Keep controllers in scene
 
-
-    // Add a laser pointer (line)
+    // Add a laser pointer
     const laserGeometry = new THREE.BufferGeometry().setFromPoints([
         new THREE.Vector3(0, 0, 0),
-        new THREE.Vector3(0, 0, -1) // Direction of the ray
+        new THREE.Vector3(0, 0, -1)
     ]);
     const laserMaterial = new THREE.LineBasicMaterial({ color: 0xffffff });
     const laser = new THREE.Line(laserGeometry, laserMaterial);
@@ -41,6 +40,10 @@ function setupController(controller) {
     laser.visible = true;
     controller.add(laser);
     controller.userData.laser = laser;
+
+    // Store the controller's initial offset from the cameraGroup
+    controller.userData.offset = new THREE.Vector3();
+    cameraGroup.worldToLocal(controller.getWorldPosition(controller.userData.offset));
 }
 
 // Call setup for each controller
@@ -146,17 +149,18 @@ function updateLaserPointer(controller) {
     if (controller.userData.laser) {
         controller.userData.laser.position.set(0, 0, 0); // Keep laser at controller origin
 
-        // Extract the forward direction of the controller
-        const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(controller.quaternion);
+        // Get the world direction of the controller
+        const worldDirection = new THREE.Vector3();
+        controller.getWorldDirection(worldDirection);
 
-        // Ignore vertical tilt to keep the laser perpendicular
-        forward.y = 0;
-        forward.normalize();
+        // Ignore any upward/downward tilt
+        worldDirection.y = 0;
+        worldDirection.normalize();
 
-        // Calculate a new quaternion that aligns the laser with the forward direction
+        // Update the laser direction
         const newQuaternion = new THREE.Quaternion().setFromUnitVectors(
-            new THREE.Vector3(0, 0, -1), // Default laser direction
-            forward // Adjusted direction without tilt
+            new THREE.Vector3(0, 0, -1), // Default laser forward direction
+            worldDirection // Adjusted direction
         );
 
         controller.userData.laser.quaternion.copy(newQuaternion);
@@ -169,11 +173,25 @@ function limitCameraPitch() {
     camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x));
 }
 
-//  Update Loop for VR Controls & Movement
+function updateControllerPosition(controller) {
+    if (controller) {
+        // Convert stored local offset to world position
+        const worldOffset = cameraGroup.localToWorld(controller.userData.offset.clone());
+        controller.position.copy(worldOffset);
+    }
+}
+
 renderer.setAnimationLoop((time, xrFrame) => {
     if (xrFrame) handleJoystickInput(xrFrame);
     limitCameraPitch();
+
+    // Keep controllers following movement
+    updateControllerPosition(controller1);
+    updateControllerPosition(controller2);
+
+    // Ensure lasers stay properly aligned
     updateLaserPointer(controller1);
     updateLaserPointer(controller2);
+
     renderer.render(scene, camera);
 });
