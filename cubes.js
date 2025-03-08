@@ -58,8 +58,12 @@ function createTextLabel(text) {
 
     const texture = new THREE.CanvasTexture(canvas);
     const material = new THREE.SpriteMaterial({ map: texture });
+
     const sprite = new THREE.Sprite(material);
     sprite.scale.set(0.5, 0.25, 1); // Adjust size
+    sprite.renderOrder = 1; // Ensures it renders above other objects
+    sprite.userData.isLabel = true; // Mark as a label (ignored by raycaster)
+
     return sprite;
 }
 

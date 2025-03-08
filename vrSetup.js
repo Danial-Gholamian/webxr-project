@@ -64,21 +64,31 @@ let selectedCube = null;
 let targetPosition = new THREE.Vector3();
 
 function selectCube(controller) {
+    // Ensure the scene updates before raycasting
+    scene.updateMatrixWorld(true);
+
+    // Get the world position of the controller (ray origin)
     const rayOrigin = new THREE.Vector3();
-    controller.getWorldPosition(rayOrigin); // Get controller position
+    controller.getWorldPosition(rayOrigin);
 
+    // Get the world direction of the controller (ray direction)
     const rayDirection = new THREE.Vector3();
-    controller.getWorldDirection(rayDirection); // Get controller forward direction
+    controller.getWorldDirection(rayDirection);
+    rayDirection.normalize(); // Normalize to ensure correct length
 
-    raycaster.set(rayOrigin, rayDirection); // Correctly set the raycaster
-    const intersects = raycaster.intersectObjects(cubes);
+    // Set the raycaster for VR selection
+    raycaster.set(rayOrigin, rayDirection);
+
+    // Perform raycasting on cubes only
+    const intersects = raycaster.intersectObjects(cubes, false); // false = no recursive checks
 
     if (intersects.length > 0) {
         selectedCube = intersects[0].object;
-        selectedCube.material.color.set(0xffffff); // Turn white
-        targetPosition.copy(cameraGroup.position); // Set target position
+        selectedCube.material.color.set(0xffffff); // Change cube color to white
+        targetPosition.copy(cameraGroup.position); // Move it to the player's position
     }
 }
+
 
 
 function moveCubeTowardsPlayer() {
