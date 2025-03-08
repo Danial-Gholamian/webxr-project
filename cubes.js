@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-// 1️ Create Scene, Camera, Renderer
+// 1 Create Scene, Camera, Renderer
 export const scene = new THREE.Scene();
 export const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.position.set(0, 1.6, 5); // Slightly back to view cubes
@@ -10,7 +10,7 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.xr.enabled = true;
 document.body.appendChild(renderer.domElement);
 
-// 2️ Add a 360° Skybox
+// 2 Add a 360° Skybox
 const skyboxTexture = new THREE.TextureLoader().load('background.webp');
 const skybox = new THREE.Mesh(
     new THREE.SphereGeometry(100, 32, 32),
@@ -18,34 +18,32 @@ const skybox = new THREE.Mesh(
 );
 scene.add(skybox);
 
-// 3️ Generate 100 Selectable Cubes with Index Labels
+// 3 Generate 100 Selectable Cubes with Index Labels
 export const cubes = [];
 export const labels = [];
 const cubeGeometry = new THREE.BoxGeometry(0.3, 0.3, 0.3);
 const colors = [0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff];
 
-for (let i = 0; i < 1000; i++) {
-    const cubeMaterial = new THREE.MeshStandardMaterial({ color: colors[i % colors.length] });
+for (let i = 0; i < 10; i++) {
+    const cubeMaterial = new THREE.MeshStandardMaterial({color: colors[i%colors.length]});
     const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
-    cube.userData.index = i; // Store index inside cube metadata
-
-    // Position cubes in a sine wave pattern
-    const x = (i - 50) * 0.3;
-    const y = Math.sin(i * 0.2) * 2;
+    cube.userData.index = i;
+    const x = (i - 5) * 0.8; // so equally on both side;
+    const y = Math.sin(i * 0.5) * 2;
     const z = 0;
 
-    cube.position.set(x, y, z);
+    cube.position.set(x,y,z);
     scene.add(cube);
-    cubes.push(cube);
+    cube.push(cube);
 
-    // 🔹 Create a label (text) above each cube
-    const label = createTextLabel(i.toString()); // Converts index to text
-    label.position.set(x, y + 0.4, z); // Slightly above the cube
+    const label = createTextLabel(i.toString());
+    label.position.set(x, y + 0.4 , z);
+
     scene.add(label);
     labels.push(label);
 }
 
-// 4️ Create a Function to Render Text Labels
+// 4 Create a Function to Render Text Labels
 function createTextLabel(text) {
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d');
@@ -63,7 +61,7 @@ function createTextLabel(text) {
     return sprite;
 }
 
-// 5️ Raycasting for Cube Selection
+// 5 Raycasting for Cube Selection
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
@@ -86,12 +84,12 @@ window.addEventListener('click', (event) => {
     }
 });
 
-// 6️ Add Lighting
+// 6 Add Lighting
 const light = new THREE.PointLight(0xffffff, 1, 10);
 light.position.set(0, 3, 0);
 scene.add(light);
 
-// 7️ Animation Loop
+// 7  Animation Loop
 export function animate() {
     renderer.setAnimationLoop(() => {
         renderer.render(scene, camera);
