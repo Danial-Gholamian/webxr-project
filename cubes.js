@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-// 1 Create Scene, Camera, Renderer
+// 1️ Create Scene, Camera, Renderer
 export const scene = new THREE.Scene();
 export const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.position.set(0, 1.6, 5); // Slightly back to view cubes
@@ -10,7 +10,7 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.xr.enabled = true;
 document.body.appendChild(renderer.domElement);
 
-// 2 Add a 360° Skybox
+// 2️ Add a 360° Skybox
 const skyboxTexture = new THREE.TextureLoader().load('background.webp');
 const skybox = new THREE.Mesh(
     new THREE.SphereGeometry(100, 32, 32),
@@ -18,12 +18,13 @@ const skybox = new THREE.Mesh(
 );
 scene.add(skybox);
 
-// 3 Generate 100 Selectable Cubes with Index Labels
+// 3️ Generate 100 Selectable Cubes with Index Labels
 export const cubes = [];
 export const labels = [];
 const cubeGeometry = new THREE.BoxGeometry(0.3, 0.3, 0.3);
+const colors = [0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff];
 
-for (let i = 0; i < 100; i++) {
+for (let i = 0; i < 1000; i++) {
     const cubeMaterial = new THREE.MeshStandardMaterial({ color: colors[i % colors.length] });
     const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
     cube.userData.index = i; // Store index inside cube metadata
@@ -62,7 +63,7 @@ function createTextLabel(text) {
     return sprite;
 }
 
-// 5 Raycasting for Cube Selection
+// 5️ Raycasting for Cube Selection
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
@@ -85,7 +86,7 @@ window.addEventListener('click', (event) => {
     }
 });
 
-// 6 Add Lighting
+// 6️ Add Lighting
 const light = new THREE.PointLight(0xffffff, 1, 10);
 light.position.set(0, 3, 0);
 scene.add(light);

@@ -12,7 +12,7 @@ function selectCube(intersects) {
     }
 }
 
-// 2 Mouse Click Selection
+// 2️ Mouse Click Selection
 window.addEventListener('click', (event) => {
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -22,7 +22,7 @@ window.addEventListener('click', (event) => {
     selectCube(intersects);
 });
 
-// 3 Keyboard Controls for Camera Movement
+// 3️ Keyboard Controls for Camera Movement
 const movementSpeed = 0.1;
 const movement = { forward: 0, right: 0 };
 
