@@ -144,7 +144,7 @@ function handleJoystickInput(xrFrame) {
 
 function updateLaserPointer(controller) {
     if (controller.userData.laser) {
-        controller.userData.laser.position.copy(controller.position);
+        controller.userData.laser.position.set(0,0,0);
         controller.userData.laser.quaternion.copy(controller.quaternion);
     }
 }
