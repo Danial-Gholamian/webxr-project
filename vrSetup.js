@@ -24,7 +24,7 @@ cameraGroup.add(controller2);
 
 const selectedCube = {object: null};
 
-function onselectStart(event) {
+function onSelectStart(event) {
     const controller = event.target;
     const raycaster = new THREE.Raycaster();
     const tempMatrix = new THREE.Matrix4();
@@ -34,18 +34,34 @@ function onselectStart(event) {
     raycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
 
     const intersects = raycaster.intersectObjects(cubes);
+
     if (intersects.length > 0) {
         selectedCube.object = intersects[0].object;
-        selectedCube.object.material.emissive.set(0x444444); // Highlight cube
+        selectedCube.object.material.emissive.set(0x444444); // Highlight the cube
+        selectedCube.object.userData.isGrabbed = true;
+        selectedCube.object.attach(controller); // Attach the cube to the controller
     }
 }
 
-function onSelectEnd() {
+
+function onSelectEnd(event) {
+    const controller = event.target;
+
     if (selectedCube.object) {
         selectedCube.object.material.emissive.set(0x000000); // Remove highlight
+        selectedCube.object.userData.isGrabbed = false;
+        scene.attach(selectedCube.object); // Reattach the cube to the scene
         selectedCube.object = null;
     }
 }
+
+function updateGrabbedCube() {
+    if (selectedCube.object && selectedCube.object.userData.isGrabbed) {
+        selectedCube.object.position.copy(selectedCube.object.parent.position);
+    }
+}
+
+
 
 
 // Function to Setup Controller Models and Laser Pointer 
@@ -171,10 +187,11 @@ function handleJoystickInput(xrFrame) {
 
 function updateLaserPointer(controller) {
     if (controller.userData.laser) {
-        controller.userData.laser.position.copy(controller.position);
+        controller.userData.laser.position.set(0, 0, 0);
         controller.userData.laser.quaternion.copy(controller.quaternion);
     }
 }
+
 
 // 9️ Prevent Camera from Flipping
 function limitCameraPitch() {
@@ -187,5 +204,6 @@ renderer.setAnimationLoop((time, xrFrame) => {
     limitCameraPitch();
     updateLaserPointer(controller1);
     updateLaserPointer(controller2);
+    updateGrabbedCube(); 
     renderer.render(scene, camera);
 });
