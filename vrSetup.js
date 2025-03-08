@@ -60,30 +60,53 @@ renderer.xr.addEventListener("sessionstart", () => {
 
 // 4️ Raycaster for VR Selection
 const raycaster = new THREE.Raycaster();
-let previouslySelectedCube = null;
+let selectedCube = null;
+let targetPosition = new THREE.Vector3();
 
-function selectCube(intersects) {
+function selectCube(controller) {
+    const rayOrigin = new THREE.Vector3();
+    controller.getWorldPosition(rayOrigin); // Get controller position
+
+    const rayDirection = new THREE.Vector3();
+    controller.getWorldDirection(rayDirection); // Get controller forward direction
+
+    raycaster.set(rayOrigin, rayDirection); // Correctly set the raycaster
+    const intersects = raycaster.intersectObjects(cubes);
+
     if (intersects.length > 0) {
-        const selectedCube = intersects[0].object;
-        selectedCube.material.color.set(0xffffff); // Change color to white
-        selectedCube.position.y += 0.5; // Move it upwards by 0.5 units
+        selectedCube = intersects[0].object;
+        selectedCube.material.color.set(0xffffff); // Turn white
+        targetPosition.copy(cameraGroup.position); // Set target position
     }
 }
 
 
+function moveCubeTowardsPlayer() {
+    if (selectedCube) {
+        const speed = 0.1; // Adjust movement speed (higher = faster)
+        selectedCube.position.lerp(targetPosition, speed); // Smooth transition
+
+        // Stop moving once the cube is close enough
+        if (selectedCube.position.distanceTo(targetPosition) < 0.2) {
+            selectedCube.position.copy(targetPosition); // Snap to exact position
+            selectedCube = null; // Stop movement
+        }
+    }
+}
+
+
+
+
 // 5️ Handle VR Controller Selection (Trigger Button)
-// Handle VR Controller Selection (Trigger Button)
+
 controller1.addEventListener('selectstart', () => {
-    raycaster.set(controller1.position, camera.getWorldDirection(new THREE.Vector3()));
-    const intersects = raycaster.intersectObjects(cubes);
-    selectCube(intersects);
+    selectCube(controller1);
 });
 
 controller2.addEventListener('selectstart', () => {
-    raycaster.set(controller2.position, camera.getWorldDirection(new THREE.Vector3()));
-    const intersects = raycaster.intersectObjects(cubes);
-    selectCube(intersects);
+    selectCube(controller2);
 });
+
 
 // 6️ Movement Variables
 const movementSpeed = 0.05;
@@ -177,5 +200,6 @@ renderer.setAnimationLoop((time, xrFrame) => {
     limitCameraPitch();
     updateLaserPointer(controller1);
     updateLaserPointer(controller2);
+    moveCubeTowardsPlayer();
     renderer.render(scene, camera);
 });
