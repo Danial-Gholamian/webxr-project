@@ -25,25 +25,27 @@ const cubeGeometry = new THREE.BoxGeometry(0.3, 0.3, 0.3);
 const colors = [0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff];
 
 for (let i = 0; i < 10; i++) {
-    const cubeMaterial = new THREE.MeshStandardMaterial({color: colors[i%colors.length]});
+    const cubeMaterial = new THREE.MeshStandardMaterial({ color: colors[i % colors.length] });
     const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
-    cube.userData.index = i;
-    const x = (i - 5) * 0.8; // so equally on both side;
-    const y = Math.sin(i * 0.5) * 2;
+    cube.userData.index = i; // Store index inside cube metadata
+
+    // Position cubes in a sine wave pattern
+    const x = (i - 50) * 0.3;
+    const y = Math.sin(i * 0.2) * 2;
     const z = 0;
 
-    cube.position.set(x,y,z);
+    cube.position.set(x, y, z);
     scene.add(cube);
-    cube.push(cube);
+    cubes.push(cube);
 
-    const label = createTextLabel(i.toString());
-    label.position.set(x, y + 0.4 , z);
-
+    // 🔹 Create a label (text) above each cube
+    const label = createTextLabel(i.toString()); // Converts index to text
+    label.position.set(x, y + 0.4, z); // Slightly above the cube
     scene.add(label);
     labels.push(label);
 }
 
-// 4 Create a Function to Render Text Labels
+// 4️ Create a Function to Render Text Labels
 function createTextLabel(text) {
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d');
@@ -89,7 +91,7 @@ const light = new THREE.PointLight(0xffffff, 1, 10);
 light.position.set(0, 3, 0);
 scene.add(light);
 
-// 7  Animation Loop
+// 7️ Animation Loop
 export function animate() {
     renderer.setAnimationLoop(() => {
         renderer.render(scene, camera);
