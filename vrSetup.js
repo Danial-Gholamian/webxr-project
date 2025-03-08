@@ -144,10 +144,19 @@ function handleJoystickInput(xrFrame) {
 
 function updateLaserPointer(controller) {
     if (controller.userData.laser) {
-        controller.userData.laser.position.set(0,0,0);
-        controller.userData.laser.quaternion.copy(controller.quaternion);
+        controller.userData.laser.position.set(0, 0, 0); // Keep laser at controller origin
+
+        // Extract only the forward rotation, ignoring left/right movement drift
+        const forwardDirection = new THREE.Vector3(0, 0, -1).applyQuaternion(controller.quaternion);
+        const newQuaternion = new THREE.Quaternion().setFromUnitVectors(
+            new THREE.Vector3(0, 0, -1), // Original laser forward direction
+            forwardDirection // Updated direction from controller
+        );
+
+        controller.userData.laser.quaternion.copy(newQuaternion);
     }
 }
+
 
 // 9️ Prevent Camera from Flipping
 function limitCameraPitch() {
