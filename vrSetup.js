@@ -146,14 +146,21 @@ function updateLaserPointer(controller) {
     if (controller.userData.laser) {
         controller.userData.laser.position.set(0, 0, 0); // Keep laser at controller origin
 
-        // Extract only the forward rotation, ignoring left/right movement drift
+        // Get the headset (HMD) rotation
+        const headset = renderer.xr.getCamera(camera);
+        const headsetQuaternion = headset.quaternion.clone(); 
+
+        // Extract forward direction from controller
         const forwardDirection = new THREE.Vector3(0, 0, -1).applyQuaternion(controller.quaternion);
-        const newQuaternion = new THREE.Quaternion().setFromUnitVectors(
-            new THREE.Vector3(0, 0, -1), // Original laser forward direction
-            forwardDirection // Updated direction from controller
+
+        // Adjust laser rotation based on both controller and headset
+        const adjustedQuaternion = new THREE.Quaternion().setFromUnitVectors(
+            new THREE.Vector3(0, 0, -1), // Original forward direction
+            forwardDirection
         );
 
-        controller.userData.laser.quaternion.copy(newQuaternion);
+        // Combine headset and controller rotation for proper alignment
+        controller.userData.laser.quaternion.copy(headsetQuaternion).multiply(adjustedQuaternion);
     }
 }
 
