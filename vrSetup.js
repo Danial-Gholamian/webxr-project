@@ -7,61 +7,18 @@ import { XRControllerModelFactory } from 'three/examples/jsm/webxr/XRControllerM
 document.body.appendChild(VRButton.createButton(renderer));
 renderer.xr.enabled = true;
 
-// 2 Create a Parent Group for the Camera (Fix Movement Issue)
+// 2️ Create a Parent Group for the Camera (Fix Movement Issue)
 let cameraGroup = new THREE.Group();
 cameraGroup.add(camera);
 scene.add(cameraGroup); // Add the group to the scene
 
-// 3 VR Controllers (Left = 0, Right = 1)
+// 3️ VR Controllers (Left = 0, Right = 1)
 const controller1 = renderer.xr.getController(0); // Left (rotate)
 const controller2 = renderer.xr.getController(1); // Right (move)
 // scene.add(controller1);
 // scene.add(controller2);
 cameraGroup.add(controller1);
 cameraGroup.add(controller2);
-
-
-
-const selectedCube = {object: null};
-
-function onSelectStart(event) {
-    const controller = event.target;
-    const raycaster = new THREE.Raycaster();
-    const tempMatrix = new THREE.Matrix4();
-
-    tempMatrix.identity().extractRotation(controller.matrixWorld);
-    raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
-    raycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
-
-    const intersects = raycaster.intersectObjects(cubes);
-
-    if (intersects.length > 0) {
-        selectedCube.object = intersects[0].object;
-        selectedCube.object.material.emissive.set(0x444444); // Highlight the cube
-        selectedCube.object.userData.isGrabbed = true;
-        selectedCube.object.attach(controller); // Attach the cube to the controller
-    }
-}
-
-
-function onSelectEnd(event) {
-    const controller = event.target;
-
-    if (selectedCube.object) {
-        selectedCube.object.material.emissive.set(0x000000); // Remove highlight
-        selectedCube.object.userData.isGrabbed = false;
-        scene.attach(selectedCube.object); // Reattach the cube to the scene
-        selectedCube.object = null;
-    }
-}
-
-function updateGrabbedCube() {
-    if (selectedCube.object && selectedCube.object.userData.isGrabbed) {
-        selectedCube.object.position.copy(selectedCube.object.parent.position);
-    }
-}
-
-
 
 
 // Function to Setup Controller Models and Laser Pointer 
@@ -187,11 +144,10 @@ function handleJoystickInput(xrFrame) {
 
 function updateLaserPointer(controller) {
     if (controller.userData.laser) {
-        controller.userData.laser.position.set(0, 0, 0);
+        controller.userData.laser.position.copy(controller.position);
         controller.userData.laser.quaternion.copy(controller.quaternion);
     }
 }
-
 
 // 9️ Prevent Camera from Flipping
 function limitCameraPitch() {
@@ -204,6 +160,5 @@ renderer.setAnimationLoop((time, xrFrame) => {
     limitCameraPitch();
     updateLaserPointer(controller1);
     updateLaserPointer(controller2);
-    updateGrabbedCube(); 
     renderer.render(scene, camera);
 });
