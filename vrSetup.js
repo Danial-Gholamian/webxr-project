@@ -21,18 +21,19 @@ cameraGroup.add(controller1);
 cameraGroup.add(controller2);
 
 
-// Function to Setup Controller Models and Laser Pointer **NEW**
+// Function to Setup Controller Models and Laser Pointer 
 function setupController(controller) {
     const controllerGrip = renderer.xr.getControllerGrip(controller === controller1 ? 0 : 1);
     const modelFactory = new XRControllerModelFactory();
     controllerGrip.add(modelFactory.createControllerModel(controllerGrip));
 
-    scene.add(controllerGrip); // Keep controllers in scene
+    cameraGroup.add(controllerGrip);
 
-    // Add a laser pointer
+
+    // Add a laser pointer (line)
     const laserGeometry = new THREE.BufferGeometry().setFromPoints([
         new THREE.Vector3(0, 0, 0),
-        new THREE.Vector3(0, 0, -1)
+        new THREE.Vector3(0, 0, -1) // Direction of the ray
     ]);
     const laserMaterial = new THREE.LineBasicMaterial({ color: 0xffffff });
     const laser = new THREE.Line(laserGeometry, laserMaterial);
@@ -40,10 +41,6 @@ function setupController(controller) {
     laser.visible = true;
     controller.add(laser);
     controller.userData.laser = laser;
-
-    // Store the controller's initial offset from the cameraGroup
-    controller.userData.offset = new THREE.Vector3();
-    cameraGroup.worldToLocal(controller.getWorldPosition(controller.userData.offset));
 }
 
 // Call setup for each controller
@@ -68,9 +65,11 @@ let previouslySelectedCube = null;
 function selectCube(intersects) {
     if (intersects.length > 0) {
         const selectedCube = intersects[0].object;
-        selectedCube.material.color.set(0xffffff); // Change to white when selected
+        selectedCube.material.color.set(0xffffff); // Change color to white
+        selectedCube.position.y += 0.5; // Move it upwards by 0.5 units
     }
 }
+
 
 // 5️ Handle VR Controller Selection (Trigger Button)
 // Handle VR Controller Selection (Trigger Button)
@@ -149,18 +148,17 @@ function updateLaserPointer(controller) {
     if (controller.userData.laser) {
         controller.userData.laser.position.set(0, 0, 0); // Keep laser at controller origin
 
-        // Get the world direction of the controller
-        const worldDirection = new THREE.Vector3();
-        controller.getWorldDirection(worldDirection);
+        // Extract the forward direction of the controller
+        const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(controller.quaternion);
 
-        // Ignore any upward/downward tilt
-        worldDirection.y = 0;
-        worldDirection.normalize();
+        // Ignore vertical tilt to keep the laser perpendicular
+        forward.y = 0;
+        forward.normalize();
 
-        // Update the laser direction
+        // Calculate a new quaternion that aligns the laser with the forward direction
         const newQuaternion = new THREE.Quaternion().setFromUnitVectors(
-            new THREE.Vector3(0, 0, -1), // Default laser forward direction
-            worldDirection // Adjusted direction
+            new THREE.Vector3(0, 0, -1), // Default laser direction
+            forward // Adjusted direction without tilt
         );
 
         controller.userData.laser.quaternion.copy(newQuaternion);
@@ -173,25 +171,11 @@ function limitCameraPitch() {
     camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x));
 }
 
-function updateControllerPosition(controller) {
-    if (controller) {
-        // Convert stored local offset to world position
-        const worldOffset = cameraGroup.localToWorld(controller.userData.offset.clone());
-        controller.position.copy(worldOffset);
-    }
-}
-
+//  Update Loop for VR Controls & Movement
 renderer.setAnimationLoop((time, xrFrame) => {
     if (xrFrame) handleJoystickInput(xrFrame);
     limitCameraPitch();
-
-    // Keep controllers following movement
-    updateControllerPosition(controller1);
-    updateControllerPosition(controller2);
-
-    // Ensure lasers stay properly aligned
     updateLaserPointer(controller1);
     updateLaserPointer(controller2);
-
     renderer.render(scene, camera);
 });
