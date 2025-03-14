@@ -87,10 +87,13 @@ function updatePendulums(deltaTime) {
         if (p === grabbedPendulum) {
             const newPos = new THREE.Vector3();
             grabbedController.getWorldPosition(newPos);
-            p.pivot.position.copy(newPos);
+            
+            // Use lerping for smoother movement
+            p.pivot.position.lerp(newPos, 0.2);  
             return;
         }
 
+        // Normal pendulum physics when not grabbed
         p.acceleration = (-gravity / length) * Math.sin(p.angle);
         p.velocity += p.acceleration * deltaTime;
         p.velocity *= damping;
@@ -99,6 +102,7 @@ function updatePendulums(deltaTime) {
         p.pivot.rotation.z = p.angle;
     });
 }
+
 
 // Export functions to use in main.js
 export { createPendulum, updatePendulums };

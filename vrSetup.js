@@ -17,11 +17,11 @@ cameraGroup.add(controller2);
 // This part is for selecting
 let grabbedObject = null;
 
-const raycaster = THREE.Raycaster();
+const raycaster = new THREE.Raycaster();
 const tempMatrix = new THREE.Matrix4();
 function getIntersection(controller){
    tempMatrix.identity().extractRotation(controller.matrixWorld);
-   raycaster.ray.origin.setFormMatrixPosition(controller.matrixWorld);
+   raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
    raycaster.ray.direction.set(0,0,-1).applyMatrix4(tempMatrix);
 
    return raycaster.intersectObjects(scene.children, true);
@@ -44,13 +44,6 @@ function onSelectEnd(event) {
        grabbedObject = null;
    }
 }
-
-controller1.addEventListener('selectstart', onSelectStart);
-controller1.addEventListener('selectend', onSelectEnd);
-
-controller2.addEventListener('selectstart', onSelectStart);
-controller2.addEventListener('selectend', onSelectEnd);
-
 
 
 
