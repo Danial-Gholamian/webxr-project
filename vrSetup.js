@@ -47,23 +47,36 @@ function onSelectEnd(event) {
 
 
 
+// function setupController(controller) {
+//     const controllerGrip = renderer.xr.getControllerGrip(controller === controller1 ? 0 : 1);
+//     const modelFactory = new XRControllerModelFactory();
+//     controllerGrip.add(modelFactory.createControllerModel(controllerGrip));
+
+//     cameraGroup.add(controllerGrip);
+
+//     const laserGeometry = new THREE.BufferGeometry().setFromPoints([
+//         new THREE.Vector3(0, 0, 0),
+//         new THREE.Vector3(0, 0, -1)
+//     ]);
+//     const laserMaterial = new THREE.LineBasicMaterial({ color: 0xffffff });
+//     const laser = new THREE.Line(laserGeometry, laserMaterial);
+//     laser.scale.z = 5;
+//     controller.add(laser);
+//     controller.userData.laser = laser;
+// }
+
 function setupController(controller) {
     const controllerGrip = renderer.xr.getControllerGrip(controller === controller1 ? 0 : 1);
     const modelFactory = new XRControllerModelFactory();
-    controllerGrip.add(modelFactory.createControllerModel(controllerGrip));
+    const controllerModel = modelFactory.createControllerModel(controllerGrip);
+    
+    // Disable motionController animations to avoid missing "menu_pressed_min"
+    controllerModel.motionController = null;
 
+    controllerGrip.add(controllerModel);
     cameraGroup.add(controllerGrip);
-
-    const laserGeometry = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(0, 0, 0),
-        new THREE.Vector3(0, 0, -1)
-    ]);
-    const laserMaterial = new THREE.LineBasicMaterial({ color: 0xffffff });
-    const laser = new THREE.Line(laserGeometry, laserMaterial);
-    laser.scale.z = 5;
-    controller.add(laser);
-    controller.userData.laser = laser;
 }
+
 
 setupController(controller1);
 setupController(controller2);
