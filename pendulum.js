@@ -14,7 +14,6 @@ const matcapTexture = new THREE.TextureLoader().load(
     'https://raw.githubusercontent.com/nidorx/matcaps/master/1024/5C4E41_CCCDD6_9B979B_B1AFB0.png'
 );
 
-// Create a pendulum at a specific position
 function createPendulum(position) {
     const armGeometry = new THREE.CylinderGeometry(0.02, 0.02, length, 32);
     const armMaterial = new THREE.MeshMatcapMaterial({ matcap: matcapTexture });
@@ -27,54 +26,53 @@ function createPendulum(position) {
     arm.position.y = -length / 2;
     bob.position.y = -length;
 
-    arm.castShadow = true;
-    arm.receiveShadow = true;
-    bob.castShadow = true;
-    bob.receiveShadow = true;
-
+    // Group pendulum objects into a single Object3D
     const pivot = new THREE.Object3D();
     pivot.add(arm);
     pivot.add(bob);
     pivot.position.copy(position);
 
+    // Add bounding box
+    const boundingBox = new THREE.Box3().setFromObject(pivot);
+    pivot.userData.boundingBox = boundingBox;
+
     scene.add(pivot);
     
-    pendulums.push({ pivot, bob, angle: Math.PI / 4, velocity: 0, acceleration: 0 });
+    pendulums.push({ pivot, bob, arm, angle: Math.PI / 4, velocity: 0, acceleration: 0 });
 
     return pivot;
 }
+
 
 // Raycasting for VR Controller Selection
 const raycaster = new THREE.Raycaster();
 
 function grabPendulum(controller) {
     scene.updateMatrixWorld(true);
-    
+
     const rayOrigin = new THREE.Vector3();
     controller.getWorldPosition(rayOrigin);
 
     const rayDirection = new THREE.Vector3();
     controller.getWorldDirection(rayDirection);
     rayDirection.normalize();
+    rayDirection.multiplyScalar(5);  // Extend ray length
 
-    console.log("Trigger Pressed at Position:", rayOrigin);
-    console.log("Ray Direction:", rayDirection);
+    console.log("🎯 Ray Origin (Controller Position):", rayOrigin);
+    console.log("➡️ Ray Direction:", rayDirection);
 
     raycaster.set(rayOrigin, rayDirection);
-    
-    const intersects = raycaster.intersectObjects(pendulums.map(p => p.bob), true);
+    const intersects = raycaster.intersectObjects(pendulums.map(p => p.pivot), true);
+
     if (intersects.length > 0) {
-        grabbedPendulum = pendulums.find(p => p.bob === intersects[0].object);
+        grabbedPendulum = pendulums.find(p => p.pivot === intersects[0].object);
         grabbedController = controller;
-
-        console.log("Pendulum grabbed:", grabbedPendulum.pivot.position);
-
-        grabbedPendulum.velocity = 0;
-        grabbedPendulum.acceleration = 0;
+        console.log(" Pendulum grabbed:", grabbedPendulum.pivot.position);
     } else {
-        console.log("No pendulum detected.");
+        console.log(" No pendulum detected.");
     }
 }
+
 
 
 function releasePendulum() {
