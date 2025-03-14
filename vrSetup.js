@@ -11,6 +11,49 @@ const controller2 = renderer.xr.getController(1);
 cameraGroup.add(controller1);
 cameraGroup.add(controller2);
 
+
+
+
+// This part is for selecting
+let grabbedObject = null;
+
+const raycaster = THREE.Raycaster();
+const tempMatrix = new THREE.Matrix4();
+function getIntersection(controller){
+   tempMatrix.identity().extractRotation(controller.matrixWorld);
+   raycaster.ray.origin.setFormMatrixPosition(controller.matrixWorld);
+   raycaster.ray.direction.set(0,0,-1).applyMatrix4(tempMatrix);
+
+   return raycaster.intersectObjects(scene.children, true);
+}
+
+function onSelectStart(event) {
+   const controller = event.target;
+   const intersections = getIntersection(controller);
+
+   if (intersections.length > 0) {
+       grabbedObject = intersections[0].object;
+       controller.attach(grabbedObject)
+   }
+}
+
+
+function onSelectEnd(event) {
+   if (grabbedObject) {
+       scene.attach(grabbedObject)
+       grabbedObject = null;
+   }
+}
+
+controller1.addEventListener('selectstart', onSelectStart);
+controller1.addEventListener('selectend', onSelectEnd);
+
+controller2.addEventListener('selectstart', onSelectStart);
+controller2.addEventListener('selectend', onSelectEnd);
+
+
+
+
 function setupController(controller) {
     const controllerGrip = renderer.xr.getControllerGrip(controller === controller1 ? 0 : 1);
     const modelFactory = new XRControllerModelFactory();
