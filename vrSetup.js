@@ -95,6 +95,8 @@ function moveThumbstick(inputX, inputY, speed = movementSpeed) {
         let moveX = right.multiplyScalar(inputX * speed);
         let moveZ = direction.multiplyScalar(-inputY * speed);
         cameraGroup.position.add(moveX).add(moveZ);
+        console.log("Move x: ", moveX);
+        console.log("Move z: ", moveZ);
     }
 }
 

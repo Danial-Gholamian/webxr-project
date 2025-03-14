@@ -57,14 +57,25 @@ function grabPendulum(controller) {
     controller.getWorldDirection(rayDirection);
     rayDirection.normalize();
 
+    console.log("Trigger Pressed at Position:", rayOrigin);
+    console.log("Ray Direction:", rayDirection);
+
     raycaster.set(rayOrigin, rayDirection);
     
     const intersects = raycaster.intersectObjects(pendulums.map(p => p.bob), true);
     if (intersects.length > 0) {
         grabbedPendulum = pendulums.find(p => p.bob === intersects[0].object);
         grabbedController = controller;
+
+        console.log("Pendulum grabbed:", grabbedPendulum.pivot.position);
+
+        grabbedPendulum.velocity = 0;
+        grabbedPendulum.acceleration = 0;
+    } else {
+        console.log("No pendulum detected.");
     }
 }
+
 
 function releasePendulum() {
     if (grabbedPendulum) {
@@ -81,19 +92,22 @@ controller2.addEventListener('selectstart', () => grabPendulum(controller2));
 controller1.addEventListener('selectend', releasePendulum);
 controller2.addEventListener('selectend', releasePendulum);
 
-// Update pendulum motion
 function updatePendulums(deltaTime) {
-    pendulums.forEach(p => {
+    pendulums.forEach((p, index) => {
+        if (index < 5) {  
+            console.log(`Pendulum ${index}: Position:`, p.pivot.position);
+        }
+
         if (p === grabbedPendulum) {
             const newPos = new THREE.Vector3();
             grabbedController.getWorldPosition(newPos);
             
-            // Use lerping for smoother movement
-            p.pivot.position.lerp(newPos, 0.2);  
+            console.log("Controller is holding pendulum at:", newPos);
+            
+            p.pivot.position.lerp(newPos, 0.8);  
             return;
         }
 
-        // Normal pendulum physics when not grabbed
         p.acceleration = (-gravity / length) * Math.sin(p.angle);
         p.velocity += p.acceleration * deltaTime;
         p.velocity *= damping;
