@@ -9,18 +9,28 @@ const pendulums = [];
 let grabbedPendulum = null;
 let grabbedController = null;
 
+// Load high-quality Matcap texture
+const matcapTexture = new THREE.TextureLoader().load(
+    'https://raw.githubusercontent.com/nidorx/matcaps/master/1024/5C4E41_CCCDD6_9B979B_B1AFB0.png'
+);
+
 // Create a pendulum at a specific position
 function createPendulum(position) {
     const armGeometry = new THREE.CylinderGeometry(0.02, 0.02, length, 32);
-    const armMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const armMaterial = new THREE.MeshMatcapMaterial({ matcap: matcapTexture });
     const arm = new THREE.Mesh(armGeometry, armMaterial);
 
-    const bobGeometry = new THREE.SphereGeometry(0.2, 32, 32);
-    const bobMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    const bobGeometry = new THREE.SphereGeometry(0.3, 32, 32);
+    const bobMaterial = new THREE.MeshMatcapMaterial({ matcap: matcapTexture });
     const bob = new THREE.Mesh(bobGeometry, bobMaterial);
 
     arm.position.y = -length / 2;
     bob.position.y = -length;
+
+    arm.castShadow = true;
+    arm.receiveShadow = true;
+    bob.castShadow = true;
+    bob.receiveShadow = true;
 
     const pivot = new THREE.Object3D();
     pivot.add(arm);
@@ -75,7 +85,6 @@ controller2.addEventListener('selectend', releasePendulum);
 function updatePendulums(deltaTime) {
     pendulums.forEach(p => {
         if (p === grabbedPendulum) {
-            // If holding a pendulum, make it follow the controller's position
             const newPos = new THREE.Vector3();
             grabbedController.getWorldPosition(newPos);
             p.pivot.position.copy(newPos);
