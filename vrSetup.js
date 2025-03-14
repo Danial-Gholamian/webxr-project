@@ -153,4 +153,21 @@ function updateLaserPointer(controller) {
     }
 }
 
+
+// ITS NEW FOR TEST MARCH 14 
+function handleTriggerClick(controller) {
+    controller.addEventListener('selectstart', () => {
+        console.log("I'm clicking !!!");
+
+        if (controller.userData.laser) {
+            const laserPosition = controller.userData.laser.position;
+            console.log(`Laser Position: X=${laserPosition.x}, Y=${laserPosition.y}, Z=${laserPosition.z}`);
+        }
+    });
+}
+
+handleTriggerClick(controller1);
+handleTriggerClick(controller2);
+// UNTIL HERE 
+
 export { handleJoystickInput, updateLaserPointer, controller1, controller2, cameraGroup };
