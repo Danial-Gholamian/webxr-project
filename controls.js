@@ -1,18 +1,18 @@
 import * as THREE from 'three';
 import { scene, camera, cubes } from './cubes.js';
 
-// 1️ Raycaster for Mouse Selection
+// Raycaster for Mouse Selection
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
 function selectCube(intersects) {
     if (intersects.length > 0) {
         const selectedCube = intersects[0].object;
-        selectedCube.material.color.set(0xffffff); // Change to white when selected
+        selectedCube.material.color.set(0xffffff);
     }
 }
 
-// 2️ Mouse Click Selection
+// Mouse Click Selection
 window.addEventListener('click', (event) => {
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -22,7 +22,7 @@ window.addEventListener('click', (event) => {
     selectCube(intersects);
 });
 
-// 3️ Keyboard Controls for Camera Movement
+// Keyboard Movement Data
 const movementSpeed = 0.1;
 const movement = { forward: 0, right: 0 };
 
@@ -42,18 +42,7 @@ window.addEventListener('keyup', (event) => {
     }
 });
 
-// 4️ Animation Loop for Movement
-function updateCameraMovement() {
-    const forwardVector = new THREE.Vector3();
-    camera.getWorldDirection(forwardVector);
-    camera.position.addScaledVector(forwardVector, movement.forward * movementSpeed);
-
-    const rightVector = new THREE.Vector3();
-    rightVector.crossVectors(camera.up, forwardVector);
-    camera.position.addScaledVector(rightVector, movement.right * movementSpeed);
-
-    requestAnimationFrame(updateCameraMovement);
-}
+// Mouse Look
 let isDragging = false;
 let previousMouseX = 0, previousMouseY = 0;
 
@@ -72,12 +61,9 @@ window.addEventListener('mousemove', (event) => {
         let deltaX = event.clientX - previousMouseX;
         let deltaY = event.clientY - previousMouseY;
 
-        // Rotate camera
         const rotationSpeed = 0.002;
-        camera.rotation.y -= deltaX * rotationSpeed; // Rotate left/right
-        camera.rotation.x -= deltaY * rotationSpeed; // Rotate up/down
-
-        // Prevent the camera from flipping upside down
+        camera.rotation.y -= deltaX * rotationSpeed;
+        camera.rotation.x -= deltaY * rotationSpeed;
         camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x));
 
         previousMouseX = event.clientX;
@@ -85,4 +71,5 @@ window.addEventListener('mousemove', (event) => {
     }
 });
 
-updateCameraMovement();
+// Export movement data for use in main.js
+export { movement };
