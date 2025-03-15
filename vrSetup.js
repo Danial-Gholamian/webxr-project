@@ -44,13 +44,23 @@ function onSelectStart(event) {
     if (intersections.length > 0) {
         grabbedObject = intersections[0].object;
         grabbedController = controller;
-        scene.attach(grabbedObject);
+
+        // Store the original parent before grabbing
+        grabbedObject.userData.originalParent = grabbedObject.parent;
+
+        // Attach it to the controller instead of the scene
+        controller.attach(grabbedObject);
     }
 }
 
+
 function onSelectEnd(event) {
     if (grabbedObject) {
-        scene.attach(grabbedObject);
+        // Restore to its original parent instead of scene
+        if (grabbedObject.userData.originalParent) {
+            grabbedObject.userData.originalParent.attach(grabbedObject);
+        }
+
         grabbedObject = null;
         grabbedController = null;
     }
@@ -161,15 +171,19 @@ function handleJoystickInput(xrFrame) {
 
 function updateLaserPointer(controller) {
     if (controller.userData.laser) {
-        controller.getWorldPosition(controller.userData.laser.position);
-
+        controller.userData.laser.position.set(0, 0, 0);
         const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(controller.quaternion);
-        forward.normalize();  // Ensure the direction vector is unit length
+        forward.y = 0;
+        forward.normalize();
 
-        controller.userData.laser.lookAt(controller.userData.laser.position.clone().add(forward));
+        const newQuaternion = new THREE.Quaternion().setFromUnitVectors(
+            new THREE.Vector3(0, 0, -1),
+            forward
+        );
+
+        controller.userData.laser.quaternion.copy(newQuaternion);
     }
 }
-
 
 
 // ITS NEW FOR TEST MARCH 14 
