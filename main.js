@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+
 import { scene, camera, renderer } from './cubes.js';
 import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
 import { handleJoystickInput, updateLaserPointer, controller1, controller2 } from './vrSetup.js';

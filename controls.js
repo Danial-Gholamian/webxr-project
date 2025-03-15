@@ -1,25 +1,52 @@
 import * as THREE from 'three';
-import { scene, camera, cubes } from './cubes.js';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { scene, camera } from './cubes.js';
+import { pendulums } from './pendulum.js';
+
 
 // Raycaster for Mouse Selection
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
+let grabbedPendulum = null;
+let isDragging = false;
 
-function selectCube(intersects) {
-    if (intersects.length > 0) {
-        const selectedCube = intersects[0].object;
-        selectedCube.material.color.set(0xffffff);
+// Detect "V" key press
+document.addEventListener("keydown", (event) => {
+    if (event.key.toLowerCase() === "v") isDragging = true;
+});
+
+document.addEventListener("keyup", (event) => {
+    if (event.key.toLowerCase() === "v") {
+        isDragging = false;
+        grabbedPendulum = null; // Release pendulum
     }
-}
+});
 
-// Mouse Click Selection
-window.addEventListener('click', (event) => {
+// Detect mouse click (start dragging)
+document.addEventListener("mousedown", (event) => {
+    if (!isDragging) return;
+
+    // Convert mouse position to normalized device coordinates (-1 to +1)
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
     raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObjects(cubes);
-    selectCube(intersects);
+    const intersections = raycaster.intersectObjects(pendulums.map(p => p.pivot), true);
+
+    if (intersections.length > 0) {
+        grabbedPendulum = intersections[0].object.parent; // Get full pendulum group
+    }
+});
+
+// Move pendulum with mouse
+document.addEventListener("mousemove", (event) => {
+    if (!grabbedPendulum) return;
+
+    // Convert mouse position to 3D world position
+    let newPos = new THREE.Vector3();
+    newPos.set(mouse.x, mouse.y, grabbedPendulum.position.z);
+
+    grabbedPendulum.position.lerp(newPos, 0.2); // Smooth transition
 });
 
 // Keyboard Movement Data
@@ -43,21 +70,23 @@ window.addEventListener('keyup', (event) => {
 });
 
 // Mouse Look
-let isDragging = false;
+let isLooking = false;
 let previousMouseX = 0, previousMouseY = 0;
 
 window.addEventListener('mousedown', (event) => {
-    isDragging = true;
-    previousMouseX = event.clientX;
-    previousMouseY = event.clientY;
+    if (event.button === 2) { // Right-click to look around
+        isLooking = true;
+        previousMouseX = event.clientX;
+        previousMouseY = event.clientY;
+    }
 });
 
 window.addEventListener('mouseup', () => {
-    isDragging = false;
+    isLooking = false;
 });
 
 window.addEventListener('mousemove', (event) => {
-    if (isDragging) {
+    if (isLooking) {
         let deltaX = event.clientX - previousMouseX;
         let deltaY = event.clientY - previousMouseY;
 

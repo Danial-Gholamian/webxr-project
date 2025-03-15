@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+
 
 // 1️ Create Scene, Camera, Renderer
 export const scene = new THREE.Scene();

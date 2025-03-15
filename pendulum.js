@@ -5,7 +5,7 @@ import { controller1, controller2 } from './vrSetup.js';
 const length = 2;
 const gravity = 9.81;
 const damping = 0.995;
-const pendulums = [];
+export const pendulums = [];  // ✅ Now correctly exported
 let grabbedPendulum = null;
 let grabbedController = null;
 
@@ -33,8 +33,7 @@ function createPendulum(position) {
     pivot.position.copy(position);
 
     // Add bounding box
-    const boundingBox = new THREE.Box3().setFromObject(pivot);
-    pivot.userData.boundingBox = boundingBox;
+    pivot.userData.boundingBox = new THREE.Box3().setFromObject(pivot);
 
     scene.add(pivot);
     
@@ -42,7 +41,6 @@ function createPendulum(position) {
 
     return pivot;
 }
-
 
 // Raycasting for VR Controller Selection
 const raycaster = new THREE.Raycaster();
@@ -54,12 +52,7 @@ function grabPendulum(controller) {
     controller.getWorldPosition(rayOrigin);
 
     const rayDirection = new THREE.Vector3();
-    controller.getWorldDirection(rayDirection);
-    rayDirection.normalize();
-    rayDirection.multiplyScalar(5);  // Extend ray length
-
-    console.log("🎯 Ray Origin (Controller Position):", rayOrigin);
-    console.log("➡️ Ray Direction:", rayDirection);
+    controller.getWorldDirection(rayDirection).normalize().multiplyScalar(5);
 
     raycaster.set(rayOrigin, rayDirection);
     const intersects = raycaster.intersectObjects(pendulums.map(p => p.pivot), true);
@@ -67,13 +60,11 @@ function grabPendulum(controller) {
     if (intersects.length > 0) {
         grabbedPendulum = pendulums.find(p => p.pivot === intersects[0].object);
         grabbedController = controller;
-        console.log(" Pendulum grabbed:", grabbedPendulum.pivot.position);
+        console.log("Pendulum grabbed:", grabbedPendulum.pivot.position);
     } else {
-        console.log(" No pendulum detected.");
+        console.log("No pendulum detected.");
     }
 }
-
-
 
 function releasePendulum() {
     if (grabbedPendulum) {
@@ -99,9 +90,6 @@ function updatePendulums(deltaTime) {
         if (p === grabbedPendulum) {
             const newPos = new THREE.Vector3();
             grabbedController.getWorldPosition(newPos);
-            
-            console.log("Controller is holding pendulum at:", newPos);
-            
             p.pivot.position.lerp(newPos, 0.8);  
             return;
         }
@@ -110,11 +98,9 @@ function updatePendulums(deltaTime) {
         p.velocity += p.acceleration * deltaTime;
         p.velocity *= damping;
         p.angle += p.velocity * deltaTime;
-        
         p.pivot.rotation.z = p.angle;
     });
 }
 
-
-// Export functions to use in main.js
+// ✅ Correct Export
 export { createPendulum, updatePendulums };
