@@ -44,23 +44,13 @@ function onSelectStart(event) {
     if (intersections.length > 0) {
         grabbedObject = intersections[0].object;
         grabbedController = controller;
-
-        // Store the original parent before grabbing
-        grabbedObject.userData.originalParent = grabbedObject.parent;
-
-        // Attach it to the controller instead of the scene
-        controller.attach(grabbedObject);
+        scene.attach(grabbedObject);
     }
 }
 
-
 function onSelectEnd(event) {
     if (grabbedObject) {
-        // Restore to its original parent instead of scene
-        if (grabbedObject.userData.originalParent) {
-            grabbedObject.userData.originalParent.attach(grabbedObject);
-        }
-
+        scene.attach(grabbedObject);
         grabbedObject = null;
         grabbedController = null;
     }
