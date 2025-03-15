@@ -1,4 +1,5 @@
-import * as THREE from '/node_modules/three/build/three.module.js';
+import * as THREE from 'three';
+
 import { scene } from './cubes.js';
 import { controller1, controller2 } from './vrSetup.js';
 

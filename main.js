@@ -1,5 +1,4 @@
-import * as THREE from '/node_modules/three/build/three.module.js';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import * as THREE from 'three';
 
 import { scene, camera, renderer } from './cubes.js';
 import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
