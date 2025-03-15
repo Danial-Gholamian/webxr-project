@@ -161,19 +161,15 @@ function handleJoystickInput(xrFrame) {
 
 function updateLaserPointer(controller) {
     if (controller.userData.laser) {
-        controller.userData.laser.position.set(0, 0, 0);
+        controller.getWorldPosition(controller.userData.laser.position);
+
         const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(controller.quaternion);
-        forward.y = 0;
-        forward.normalize();
+        forward.normalize();  // Ensure the direction vector is unit length
 
-        const newQuaternion = new THREE.Quaternion().setFromUnitVectors(
-            new THREE.Vector3(0, 0, -1),
-            forward
-        );
-
-        controller.userData.laser.quaternion.copy(newQuaternion);
+        controller.userData.laser.lookAt(controller.userData.laser.position.clone().add(forward));
     }
 }
+
 
 
 // ITS NEW FOR TEST MARCH 14 
