@@ -103,5 +103,4 @@ function updatePendulums(deltaTime) {
     });
 }
 
-// ✅ Correct Export
 export { createPendulum, updatePendulums };

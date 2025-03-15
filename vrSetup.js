@@ -20,35 +20,50 @@ cameraGroup.add(controller2);
 
 // This part is for selecting
 let grabbedObject = null;
+let grabbedController = null;
 
 const raycaster = new THREE.Raycaster();
 const tempMatrix = new THREE.Matrix4();
-function getIntersection(controller){
-   tempMatrix.identity().extractRotation(controller.matrixWorld);
-   raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
-   raycaster.ray.direction.set(0,0,-1).applyMatrix4(tempMatrix);
 
-   return raycaster.intersectObjects(scene.children, true);
+
+function getIntersection(controller) {
+    tempMatrix.identity().extractRotation(controller.matrixWorld);
+    raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
+    raycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
+    
+    raycaster.far = 10;  
+
+    return raycaster.intersectObjects(scene.children, true);
 }
+
 
 function onSelectStart(event) {
-   const controller = event.target;
-   const intersections = getIntersection(controller);
+    const controller = event.target;
+    const intersections = getIntersection(controller);
 
-   if (intersections.length > 0) {
-       grabbedObject = intersections[0].object;
-       controller.attach(grabbedObject)
-   }
+    if (intersections.length > 0) {
+        grabbedObject = intersections[0].object;
+        grabbedController = controller;
+        scene.attach(grabbedObject);
+    }
 }
-
 
 function onSelectEnd(event) {
-   if (grabbedObject) {
-       scene.attach(grabbedObject)
-       grabbedObject = null;
-   }
+    if (grabbedObject) {
+        scene.attach(grabbedObject);
+        grabbedObject = null;
+        grabbedController = null;
+    }
 }
 
+function updatePendulumPosition() {
+    if (grabbedObject && grabbedController) {
+        let newPos = new THREE.Vector3();
+        grabbedController.getWorldPosition(newPos);
+
+        grabbedObject.position.lerp(newPos, 0.5);  
+    }
+}
 
 
 function setupController(controller) {
@@ -67,6 +82,9 @@ function setupController(controller) {
     laser.scale.z = 50;
     controller.add(laser);
     controller.userData.laser = laser;
+
+    controller.addEventListener('selectstart', onSelectStart);
+    controller.addEventListener('selectend', onSelectEnd);
 }
 
 // function setupController(controller) {
@@ -174,4 +192,4 @@ handleTriggerClick(controller1);
 handleTriggerClick(controller2);
 // UNTIL HERE 
 
-export { handleJoystickInput, updateLaserPointer, controller1, controller2, cameraGroup };
+export { handleJoystickInput, updateLaserPointer, controller1, controller2, cameraGroup, updatePendulumPosition };
