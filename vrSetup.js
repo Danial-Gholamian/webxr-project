@@ -40,30 +40,31 @@ function getIntersection(controller) {
 function onSelectStart(event) {
     const controller = event.target;
     const intersections = getIntersection(controller);
-
+  
     if (intersections.length > 0) {
-        grabbedObject = intersections[0].object;
-        grabbedController = controller;
-        scene.attach(grabbedObject);
+      grabbedObject = intersections[0].object;
+      grabbedController = controller;
     }
-}
+  }
+  
 
-function onSelectEnd(event) {
-    if (grabbedObject) {
-        scene.attach(grabbedObject);
-        grabbedObject = null;
-        grabbedController = null;
-    }
-}
+  function onSelectEnd(event) {
+    grabbedObject = null;
+    grabbedController = null;
+  }
+  
 
-function updatePendulumPosition() {
+  function updatePendulumPosition() {
     if (grabbedObject && grabbedController) {
-        let newPos = new THREE.Vector3();
-        grabbedController.getWorldPosition(newPos);
-
-        grabbedObject.position.lerp(newPos, 0.5);  
+      // Get world position of controller
+      const controllerPos = new THREE.Vector3();
+      grabbedController.getWorldPosition(controllerPos);
+  
+      // Optionally smooth motion
+      grabbedObject.position.lerp(controllerPos, 0.5);
     }
-}
+  }
+  
 
 
 function setupController(controller) {
