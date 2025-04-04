@@ -48,24 +48,31 @@ const raycaster = new THREE.Raycaster();
 
 function grabPendulum(controller) {
     scene.updateMatrixWorld(true);
-
+  
     const rayOrigin = new THREE.Vector3();
     controller.getWorldPosition(rayOrigin);
-
+  
     const rayDirection = new THREE.Vector3();
     controller.getWorldDirection(rayDirection).normalize().multiplyScalar(5);
-
+  
     raycaster.set(rayOrigin, rayDirection);
     const intersects = raycaster.intersectObjects(pendulums.map(p => p.pivot), true);
-
+  
     if (intersects.length > 0) {
-        grabbedPendulum = pendulums.find(p => p.pivot === intersects[0].object);
+      const hitPivot = intersects[0].object.parent; // 'arm' or 'bob'.parent === pivot
+      grabbedPendulum = pendulums.find(p => p.pivot === hitPivot);
+  
+      if (grabbedPendulum) {
         grabbedController = controller;
         console.log("Pendulum grabbed:", grabbedPendulum.pivot.position);
+      } else {
+        console.log("Hit something, but couldn't match it to a pendulum.");
+      }
     } else {
-        console.log("No pendulum detected.");
+      console.log("No pendulum detected.");
     }
-}
+  }
+  
 
 function releasePendulum() {
     if (grabbedPendulum) {
