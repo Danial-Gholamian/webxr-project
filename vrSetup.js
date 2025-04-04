@@ -12,9 +12,6 @@ scene.add(cameraGroup);
 
 const controller1 = renderer.xr.getController(0);
 const controller2 = renderer.xr.getController(1);
-const controllerGroup1 = new THREE.Group();
-const controllerGroup2 = new THREE.Group();
-
 cameraGroup.add(controller1);
 cameraGroup.add(controller2);
 
@@ -70,41 +67,34 @@ function onSelectStart(event) {
   
 
 
-  function setupController(controller, group) {
-    const controllerGrip = renderer.xr.getControllerGrip(controller === controller1 ? 0 : 1);
-    const modelFactory = new XRControllerModelFactory();
-    controllerGrip.add(modelFactory.createControllerModel(controllerGrip));
-  
-    cameraGroup.add(controllerGrip); // keep as-is
-  
-    // Add controller to group
-    group.add(controller);
-  
-    // Create and add laser to group
-    const laserGeometry = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(0, 0, 0),
-      new THREE.Vector3(0, 0, -1)
-    ]);
-    const laserMaterial = new THREE.LineBasicMaterial({ color: 0xffffff });
-    const laser = new THREE.Line(laserGeometry, laserMaterial);
-    laser.scale.z = 50;
-  
-    group.add(laser);
-    group.userData.laser = laser;
-  
-    // Add group to the scene
-    cameraGroup.add(group);
-  
-    controller.addEventListener('selectstart', onSelectStart);
-    controller.addEventListener('selectend', onSelectEnd);
-  }
+function setupController(controller) {
+const controllerGrip = renderer.xr.getControllerGrip(controller === controller1 ? 0 : 1);
+const modelFactory = new XRControllerModelFactory();
+controllerGrip.add(modelFactory.createControllerModel(controllerGrip));
+cameraGroup.add(controllerGrip);
+
+const laserGeometry = new THREE.BufferGeometry().setFromPoints([
+    new THREE.Vector3(0, 0, 0),
+    new THREE.Vector3(0, 0, -1)
+]);
+const laserMaterial = new THREE.LineBasicMaterial({ color: 0xffffff });
+const laser = new THREE.Line(laserGeometry, laserMaterial);
+laser.scale.z = 50;
+
+controller.add(laser);
+controller.userData.laser = laser;
+
+cameraGroup.add(controller);
+
+controller.addEventListener('selectstart', onSelectStart);
+controller.addEventListener('selectend', onSelectEnd);
+}
   
 
 
 
-  setupController(controller1, controllerGroup1);
-  setupController(controller2, controllerGroup2);
-  
+setupController(controller1);
+setupController(controller2);
 
 const controllers = { left: null, right: null };
 
@@ -161,11 +151,12 @@ function handleJoystickInput(xrFrame) {
     cameraGroup.updateMatrixWorld(true);
 }
 
-function updateLaserPointer(group) {
-    if (group.userData.laser) {
-      group.userData.laser.scale.z = 50;
-      group.userData.laser.position.set(0, 0, 0);
-      group.userData.laser.rotation.set(0, 0, 0);
+function updateLaserPointer(controller) {
+    if (controller.userData.laser) {
+      // If you want to dynamically adjust length, you can still do that
+      controller.userData.laser.scale.z = 50;
+      // No need to manually update position or rotation —
+      // it's already a child of the controller and follows it automatically
     }
   }
   
@@ -174,17 +165,19 @@ function updateLaserPointer(group) {
 // ITS NEW FOR TEST MARCH 14 
 function handleTriggerClick(controller) {
     controller.addEventListener('selectstart', () => {
-        console.log("I'm clicking !!!");
-
-        if (controller.userData.laser) {
-            const laserPosition = controller.userData.laser.position;
-            console.log(`Laser Position: X=${laserPosition.x}, Y=${laserPosition.y}, Z=${laserPosition.z}`);
-        }
+      console.log("I'm clicking !!!");
+  
+      if (controller.userData.laser) {
+        const laserWorldPos = new THREE.Vector3();
+        controller.userData.laser.getWorldPosition(laserWorldPos);
+        console.log(`Laser World Position: X=${laserWorldPos.x}, Y=${laserWorldPos.y}, Z=${laserWorldPos.z}`);
+      }
     });
-}
+  }
+  
 
 handleTriggerClick(controller1);
 handleTriggerClick(controller2);
 // UNTIL HERE 
 
-export { handleJoystickInput, updateLaserPointer, controllerGroup1, controllerGroup2, cameraGroup, updatePendulumPosition };
+export { handleJoystickInput, updateLaserPointer, controller1, controller2, cameraGroup, updatePendulumPosition };

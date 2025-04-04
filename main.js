@@ -2,7 +2,7 @@ import * as THREE from 'three';
 
 import { scene, camera, renderer } from './cubes.js';
 import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
-import { handleJoystickInput, updateLaserPointer, controllerGroup1, controllerGroup2, updatePendulumPosition } from './vrSetup.js';
+import { handleJoystickInput, updateLaserPointer, controller1, controller2, updatePendulumPosition } from './vrSetup.js';
 import { createPendulum, updatePendulums } from './pendulum.js';
 import { movement } from './controls.js';
 
@@ -27,8 +27,8 @@ function updateCameraMovement() {
 // Animation loop
 renderer.setAnimationLoop((time, xrFrame) => {
     if (xrFrame) handleJoystickInput(xrFrame);
-    updateLaserPointer(controllerGroup1);
-    updateLaserPointer(controllerGroup2);    
+    updateLaserPointer(controller1);
+    updateLaserPointer(controller2);
     updatePendulums(0.016);
     updateCameraMovement();
     updatePendulumPosition();
