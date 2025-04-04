@@ -87,18 +87,6 @@ function setupController(controller) {
     controller.addEventListener('selectend', onSelectEnd);
 }
 
-// function setupController(controller) {
-//     const controllerGrip = renderer.xr.getControllerGrip(controller === controller1 ? 0 : 1);
-//     const modelFactory = new XRControllerModelFactory();
-//     const controllerModel = modelFactory.createControllerModel(controllerGrip);
-//     cameraGroup.add(controllerGrip)
-
-//     // Disable motionController animations to avoid missing "menu_pressed_min"
-//     controllerModel.motionController = null;
-
-//     controllerGrip.add(controllerModel);
-//     cameraGroup.add(controllerGrip);
-// }
 
 
 setupController(controller1);
@@ -161,19 +149,13 @@ function handleJoystickInput(xrFrame) {
 
 function updateLaserPointer(controller) {
     if (controller.userData.laser) {
-        controller.userData.laser.position.set(0, 0, 0);
-        const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(controller.quaternion);
-        forward.y = 0;
-        forward.normalize();
-
-        const newQuaternion = new THREE.Quaternion().setFromUnitVectors(
-            new THREE.Vector3(0, 0, -1),
-            forward
-        );
-
-        controller.userData.laser.quaternion.copy(newQuaternion);
+      // If you want to dynamically adjust length, you can still do that
+      controller.userData.laser.scale.z = 50;
+      // No need to manually update position or rotation —
+      // it's already a child of the controller and follows it automatically
     }
-}
+  }
+  
 
 
 // ITS NEW FOR TEST MARCH 14 
